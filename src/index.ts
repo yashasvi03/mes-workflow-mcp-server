@@ -88,6 +88,34 @@ async function saveClientDecisions(data: ClientDecisions): Promise<void> {
   );
 }
 
+// Helper function to check if task should be included based on decision
+function shouldIncludeTask(
+  task: Task,
+  decisions: { [key: string]: ClientDecision }
+): boolean {
+  if (!task.decision_id) {
+    return true;
+  }
+
+  // Runtime conditions are always included
+  if (task.decision_id.startsWith('C-')) {
+    return true;
+  }
+
+  const clientChoice = decisions[task.decision_id]?.selected_outcome;
+  if (!clientChoice) {
+    return false;
+  }
+
+  // Handle multiple valid outcomes (comma-separated in decision_outcome)
+  if (task.decision_outcome && task.decision_outcome.includes(',')) {
+    const validOutcomes = task.decision_outcome.split(',').map((o) => o.trim());
+    return validOutcomes.includes(clientChoice);
+  }
+
+  return clientChoice === task.decision_outcome;
+}
+
 // Helper function to find closest included ancestor
 function findClosestIncludedAncestor(
   task: Task,
@@ -202,9 +230,42 @@ function generateMermaidDiagram(
 
   mermaid += '\n';
 
+  // Check if Q-SEC-01 is set to "Both (material-dependent)"
+  const secDecision = decisions['Q-SEC-01'];
+  const isBothPaths = secDecision?.selected_outcome === 'Both (material-dependent)';
+
+  // Special handling for DISP-017 routing when "Both" is selected
+  if (isBothPaths && includedTaskIds.has('DISP-017')) {
+    const disp017NodeId = 'DISP_017';
+    const decisionNodeId = 'DEC_C_SEC_01';
+
+    // Add C-SEC-01 decision diamond
+    mermaid += `  ${decisionNodeId}{Is container sealed?}\n`;
+    mermaid += `  class ${decisionNodeId} decisionStyle\n`;
+    mermaid += `  ${disp017NodeId} --> ${decisionNodeId}\n`;
+
+    // Route to sealed path
+    if (includedTaskIds.has('DISP-SL-001')) {
+      mermaid += `  ${decisionNodeId} -->|Yes → Sealed| DISP_SL_001\n`;
+    }
+
+    // Route to weighing path
+    if (includedTaskIds.has('DISP-L-001')) {
+      mermaid += `  ${decisionNodeId} -->|No → Weighing| DISP_L_001\n`;
+    }
+
+    createdDecisionNodes.add(decisionNodeId);
+  }
+
   // Generate edges with smart linking
   for (const task of filteredTasks) {
     const nodeId = task.id.replace(/-/g, '_');
+
+    // Skip DISP-L-001 and DISP-SL-001 predecessors if "Both" path - already handled above
+    if (isBothPaths && (task.id === 'DISP-L-001' || task.id === 'DISP-SL-001')) {
+      // Skip predecessor edges - handled by decision diamond
+      continue;
+    }
 
     if (task.predecessors && task.predecessors.length > 0) {
       // Filter predecessors to only those in the workflow
@@ -274,7 +335,7 @@ function generateMermaidDiagram(
 const server = new Server(
   {
     name: 'mes-workflow-server',
-    version: '2.0.0',
+    version: '2.1.0',
   },
   {
     capabilities: {
@@ -367,7 +428,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'generate_workflow',
-      description: 'Generate a Mermaid workflow diagram based on client decisions. This filters tasks based on Practice decisions and shows all Runtime exception paths. Version 2.0 includes improved connectivity, decision diamonds, loop back edges, and subgraphs.',
+      description: 'Generate a Mermaid workflow diagram based on client decisions. This filters tasks based on Practice decisions and shows all Runtime exception paths. Version 2.1 includes support for multi-path dispensing (Q-SEC-01 "Both" option).',
       inputSchema: {
         type: 'object',
         properties: {
@@ -662,15 +723,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const decisions = clientDecisions[client_name] || {};
         const allTasks = await loadTasks();
 
-        // Filter tasks
+        // Filter tasks using new helper function
         let filteredTasks = allTasks.filter((task) => {
           if (stage !== 'All' && task.stage !== stage) return false;
-          if (!task.decision_id) return true;
-          if (task.decision_id.startsWith('C-')) return true;
-
-          const clientChoice = decisions[task.decision_id]?.selected_outcome;
-          if (!clientChoice) return false;
-          return clientChoice === task.decision_outcome;
+          return shouldIncludeTask(task, decisions);
         });
 
         const includedTaskIds = new Set(filteredTasks.map((t) => t.id));
@@ -744,26 +800,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         const allTasks = await loadTasks();
 
-        // Filter tasks based on stage and client decisions
+        // Filter tasks based on stage and client decisions using new helper function
         let filteredTasks = allTasks.filter((task) => {
           if (stage !== 'All' && task.stage !== stage) {
             return false;
           }
 
-          if (!task.decision_id) {
-            return true;
-          }
-
-          if (task.decision_id.startsWith('C-')) {
-            return true;
-          }
-
-          const clientChoice = decisions[task.decision_id]?.selected_outcome;
-          if (!clientChoice) {
-            return false;
-          }
-
-          return clientChoice === task.decision_outcome;
+          return shouldIncludeTask(task, decisions);
         });
 
         // Generate improved Mermaid diagram
@@ -791,11 +834,12 @@ ${Object.entries(decisions)
   .map(([id, data]) => `- ${id} = "${data.selected_outcome}"`)
   .join('\n')}${Object.keys(decisions).length > 10 ? `\n... and ${Object.keys(decisions).length - 10} more` : ''}
 
-**Improvements in v2.0:**
+**Improvements in v2.1:**
 ✅ Smart ancestor linking - no orphaned nodes
 ✅ Decision diamonds for runtime conditions
 ✅ Loop back edges showing iteration
 ✅ Subgraphs organized by stage
+✅ Multi-path dispensing support (Q-SEC-01 "Both" option)
 ✅ Better handling of OR predecessors
 
 **Workflow Diagram:**
@@ -851,7 +895,7 @@ ${mermaid}
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('MES Workflow MCP server v2.0 running on stdio');
+  console.error('MES Workflow MCP server v2.1 running on stdio');
 }
 
 main().catch((error) => {

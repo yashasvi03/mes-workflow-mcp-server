@@ -128,11 +128,20 @@
   {
     "id": "Q-SEC-01",
     "category": "Practice",
-    "question": "Sealed container dispensing for this material?",
-    "outcomes": ["Yes", "No"],
+    "question": "Which dispensing methods are used in your facility?",
+    "outcomes": ["Weighing only", "Sealed only", "Both (material-dependent)"],
     "stage": "Weighing & Dispensing",
-    "affects": "Choose weigh-loop vs sealed-loop",
-    "notes": "If Yes, no balance weigh; take declared weight from label."
+    "affects": "Dispensing path configuration",
+    "notes": "Both enables runtime selection per container based on material properties and packaging. Runtime condition C-SEC-01 routes to appropriate path."
+  },
+  {
+    "id": "C-SEC-01",
+    "category": "Runtime",
+    "question": "Is this specific container sealed?",
+    "outcomes": ["Yes → Sealed path", "No → Weighing path"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Path routing after container identification",
+    "notes": "Only active when Q-SEC-01='Both (material-dependent)'. Routes to DISP-SL-001 if Yes, DISP-L-001 if No. Based on container barcode/label or material master default."
   },
   {
     "id": "Q-LOT-01",

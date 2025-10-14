@@ -71,9 +71,9 @@
       "timestamp": "2025-01-14T10:13:00Z"
     },
     "Q-SEC-01": {
-      "selected_outcome": "No",
-      "rationale": "Material-specific: API-1 and PVP K30 use weighing path; Lactose uses sealed path (configured separately)",
-      "timestamp": "2025-01-14T10:14:00Z"
+      "selected_outcome": "Both (material-dependent)",
+      "rationale": "Facility supports both dispensing methods. APIs (API-1, PVP K30) require weighing for potency adjustment and balance verification. Excipients like Lactose arrive pre-weighed in sealed containers from suppliers. Runtime routing per container based on material class, packaging type, and supplier specifications.",
+      "timestamp": "2025-10-14T16:11:05.344Z"
     },
     "Q-LOT-01": {
       "selected_outcome": "Yes",
