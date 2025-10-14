@@ -60,6 +60,15 @@ This tool captures these variations through **28 Practice decisions** and genera
 - 🟠 **Orange diamonds** for decision points
 - 🟢 **Green nodes** for convergence/completion
 
+### 🆕 What's New in v2.3.0
+
+- ✨ **Refined visual layout** with cleaner node organization and improved readability
+- 🎨 **Enhanced decision points** with better styling and placement
+- 🔄 **Improved dual-path workflows** with clearer convergence visualization
+- 📦 **Local PNG export** using @mermaid-js/mermaid-cli for high-quality deliverables
+- 🎯 **Professional exports** at 2400x3000px resolution
+- ⚡ **Performance optimizations** for faster diagram generation
+
 ---
 
 ## 🏗️ Architecture
@@ -689,12 +698,49 @@ Built with:
 
 ## 📊 Project Stats
 
-- **Version:** 2.2.0
+- **Version:** 2.3.0
 - **Total Decisions:** 28 Practice + 13 Runtime = 41
 - **Total Tasks:** 65 (5 Macros + 56 Micros + 4 Loops)
 - **Workflow Stages:** 5
 - **Supported Clients:** Unlimited
 - **Export Formats:** PNG (SVG coming soon)
+
+---
+
+## 🆕 Version History
+
+### Version 2.3.0 (Current)
+**Enhanced Workflow Visualization & Export Improvements**
+- ✨ **Refined diagram layout**: Cleaner visual structure with improved node organization
+- 🎨 **Better decision points**: Enhanced decision diamond styling and placement
+- 🔄 **Improved path convergence**: Clearer visual flow for dual-path workflows (weighing/sealed)
+- 📦 **Local PNG export**: Full local export support using @mermaid-js/mermaid-cli
+- 🎯 **High-resolution exports**: 2400x3000px professional deliverables
+- ⚡ **Faster generation**: Optimized diagram generation algorithm
+- 🧹 **Code cleanup**: Removed redundant functions, streamlined codebase
+
+### Version 2.2.0
+**Workflow Persistence & Export Capabilities**
+- 💾 Auto-save generated workflows to `client_workflows.json`
+- 📤 Export workflows as PNG images via Mermaid.ink API
+- 📁 Organized client export folders with timestamped files
+- 🔢 Version tracking for workflow iterations
+- 📊 Workflow metadata (task counts, decision counts)
+
+### Version 2.1.0
+**Multi-Path Dispensing Support**
+- 🔀 Dual-path workflow support (weighing + sealed containers)
+- 🎯 Material-dependent routing with decision diamonds
+- 🟣 Enhanced loop visualization
+- 🔗 Path convergence nodes
+
+### Version 1.0.0
+**Initial Release**
+- 📋 Decision-driven workflow configuration
+- 🔧 28 Practice decisions framework
+- ⚙️ 13 Runtime condition handling
+- 📊 Mermaid diagram generation
+- 🎨 Color-coded workflow elements
 
 ---
 

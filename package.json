@@ -1,6 +1,6 @@
 {
   "name": "mes-workflow-mcp-server",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "type": "module",
   "description": "MCP server for MES workflow configuration and visualization",
   "main": "build/index.js",

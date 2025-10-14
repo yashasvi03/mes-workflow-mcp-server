@@ -1,0 +1,280 @@
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e1f5ff','primaryTextColor':'#01579b','primaryBorderColor':'#0288d1','lineColor':'#546e7a','secondaryColor':'#fff9e1','tertiaryColor':'#f3e5f5'}}}%%
+graph TB
+  classDef macroStyle fill:#0288d1,stroke:#01579b,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:16px
+  classDef microStyle fill:#fff9e1,stroke:#f9a825,stroke-width:2px,color:#3e2723,font-size:14px
+  classDef loopStyle fill:#8e24aa,stroke:#4a148c,stroke-width:3px,color:#ffffff,font-weight:bold,font-size:14px
+  classDef exceptionStyle fill:#ffcdd2,stroke:#c62828,stroke-width:3px,stroke-dasharray:8 4,color:#b71c1c,font-weight:bold
+  classDef decisionStyle fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#e65100,font-weight:bold
+  classDef convergeStyle fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#1b5e20,font-weight:bold
+  classDef dualPathStyle fill:#e1bee7,stroke:#6a1b9a,stroke-width:3px,color:#4a148c,font-weight:bold
+
+  %% ========================================
+  %% START
+  %% ========================================
+
+  START([🏁 START DISPENSING])
+  style START fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px
+
+  %% ========================================
+  %% STAGE 1: PRE-DISPENSING
+  %% ========================================
+
+  M1["📋 PRE-DISPENSING &<br/>ROOM READINESS"]
+  class M1 macroStyle
+  START --> M1
+
+  %% ========================================
+  %% STAGE 2: MATERIAL ALLOCATION
+  %% ========================================
+
+  M2["📦 MATERIAL IDENTIFICATION<br/>ALLOCATION & STAGING"]
+  class M2 macroStyle
+  M1 ==> M2
+
+  T014["🎯 SAP/ERP BATCH<br/>DETERMINATION"]
+  style T014 fill:#bbdefb,stroke:#1565c0,stroke-width:3px,color:#0d47a1,font-weight:bold
+
+  %% ========================================
+  %% STAGE 3: WEIGHING & DISPENSING
+  %% ========================================
+
+  M3["⚖️ WEIGHING &<br/>DISPENSING"]
+  class M3 macroStyle
+  M2 ==> M3
+
+  ROUTE{"🔀 CONTAINER<br/>SEALED?<br/>(Material-Dependent)"}
+  class ROUTE dualPathStyle
+  M3 --> ROUTE
+
+  %% ========================================
+  %% STAGE 4: LABELING & DOCUMENTATION
+  %% ========================================
+
+  M5["🏷️ LABELING, RECONCILIATION<br/>& DOCUMENTATION"]
+  class M5 macroStyle
+
+  CONVERGE["🔗 PATHS CONVERGE"]
+  class CONVERGE convergeStyle
+  CONVERGE ==> M5
+
+  %% ========================================
+  %% STAGE 5: POST-DISPENSING
+  %% ========================================
+
+  M6["📤 POST-DISPENSING<br/>TRANSFER & ERP POSTING"]
+  class M6 macroStyle
+  M5 ==> M6
+
+  %% ========================================
+  %% END
+  %% ========================================
+
+  COMPLETE([🎉 DISPENSING COMPLETE])
+  style COMPLETE fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px
+  M6 ==> COMPLETE
+
+  subgraph Pre-Dispensing["Pre-Dispensing"]
+    DISP_M_001[["DISP-M-001:<br/>Pre-Dispensing & Room Readiness"]]
+    class DISP_M_001 macroStyle
+    DISP_001["DISP-001:<br/>Training & role gate"]
+    class DISP_001 microStyle
+    DISP_002["DISP-002:<br/>Line clearance request & checklist"]
+    class DISP_002 microStyle
+    DISP_003["DISP-003:<br/>Verify previous batch clearance and remove residuals"]
+    class DISP_003 microStyle
+    DISP_004["DISP-004:<br/>Check room cleaning hold-time validity"]
+    class DISP_004 microStyle
+    DISP_005["DISP-005:<br/>If cleaning hold-time expired, perform cleaning & record"]
+    class DISP_005 exceptionStyle
+    DISP_006["DISP-006:<br/>Capture RT/RH/DP (auto/manual) & evaluate limits"]
+    class DISP_006 microStyle
+    DISP_008["DISP-008:<br/>Balance calibration/verification validity check"]
+    class DISP_008 microStyle
+    DISP_009["DISP-009:<br/>QA room readiness inspection & e-sign"]
+    class DISP_009 microStyle
+  end
+  subgraph Material_Allocation["Material Allocation"]
+    DISP_M_002[["DISP-M-002:<br/>Material Identification, Allocation & Staging"]]
+    class DISP_M_002 macroStyle
+    DISP_010["DISP-010:<br/>Retrieve production order & BOM"]
+    class DISP_010 microStyle
+    DISP_011["DISP-011:<br/>Sync material master (expiry, storage, status, TOR rules)"]
+    class DISP_011 microStyle
+    DISP_012["DISP-012:<br/>Fetch available inventory lots"]
+    class DISP_012 microStyle
+    DISP_013["DISP-013:<br/>Filter lots by allowed status and re-test validity"]
+    class DISP_013 microStyle
+    DISP_014["DISP-014:<br/>ERP batch/lot determination (if configured)"]
+    class DISP_014 microStyle
+    DISP_016["DISP-016:<br/>Reserve lots; stage to dispensing area; verify mapping"]
+    class DISP_016 microStyle
+    DISP_017["DISP-017:<br/>Identify container and verify against allocation"]
+    class DISP_017 microStyle
+  end
+  subgraph Weighing_and_Dispensing["Weighing & Dispensing"]
+    DISP_M_003[["DISP-M-003:<br/>Container-by-Container Dispensing (Weighing Path)"]]
+    class DISP_M_003 macroStyle
+    DISP_M_004[["DISP-M-004:<br/>Sealed Container Dispensing (No-Weigh Path)"]]
+    class DISP_M_004 macroStyle
+    DISP_L_001(("DISP-L-001:<br/>Start container loop (weighing)"))
+    class DISP_L_001 loopStyle
+    DISP_020["DISP-020:<br/>Select next container for weighing"]
+    class DISP_020 microStyle
+    DISP_021["DISP-021:<br/>Check container integrity (seal/label)"]
+    class DISP_021 exceptionStyle
+    DISP_022["DISP-022:<br/>Balance suitability vs target band"]
+    class DISP_022 microStyle
+    DISP_023["DISP-023:<br/>Select weighing method for this container"]
+    class DISP_023 microStyle
+    DISP_024["DISP-024:<br/>Tare container / record empty weight"]
+    class DISP_024 microStyle
+    DISP_025["DISP-025:<br/>Pull assay & CoA; compute adjusted quantity"]
+    class DISP_025 microStyle
+    DISP_026["DISP-026:<br/>Apply UoM conversion & rounding"]
+    class DISP_026 microStyle
+    DISP_026A["DISP-026A:<br/>Instrument handshake health check"]
+    class DISP_026A microStyle
+    DISP_027["DISP-027:<br/>Weigh material into dispense container"]
+    class DISP_027 microStyle
+    DISP_027S["DISP-027S:<br/>Spill detection gate"]
+    class DISP_027S exceptionStyle
+    DISP_027C["DISP-027C:<br/>Spill cleanup per SOP and waste logging"]
+    class DISP_027C microStyle
+    DISP_027A["DISP-027A:<br/>Adjust inventory and re-weigh delta (if continuing)"]
+    class DISP_027A microStyle
+    DISP_028["DISP-028:<br/>Network fallback capture (manual entry + photo)"]
+    class DISP_028 exceptionStyle
+    DISP_029["DISP-029:<br/>Check tolerance; deviation per policy if OOT"]
+    class DISP_029 exceptionStyle
+    DISP_030["DISP-030:<br/>Print & affix container label; scan verify"]
+    class DISP_030 microStyle
+    DISP_030V["DISP-030V:<br/>Label scanback verification (uniqueness & match)"]
+    class DISP_030V microStyle
+    DISP_030O["DISP-030O:<br/>Offline label issuance with manual template and QA countersign"]
+    class DISP_030O exceptionStyle
+    DISP_031["DISP-031:<br/>Update running total; continue or finish"]
+    class DISP_031 microStyle
+    DISP_032["DISP-032:<br/>Handle last-container partial use (remnant label)"]
+    class DISP_032 exceptionStyle
+    DISP_L_002(("DISP-L-002:<br/>End container loop (weighing)"))
+    class DISP_L_002 loopStyle
+    DISP_SL_001(("DISP-SL-001:<br/>Start container loop (sealed, no weigh)"))
+    class DISP_SL_001 loopStyle
+    DISP_SL_002["DISP-SL-002:<br/>Scan sealed container; capture declared net mass from label"]
+    class DISP_SL_002 microStyle
+    DISP_SL_003["DISP-SL-003:<br/>Verify container integrity & eligibility (status/retest)"]
+    class DISP_SL_003 microStyle
+    DISP_SL_004["DISP-SL-004:<br/>Print & affix dispensed container label (sealed)"]
+    class DISP_SL_004 microStyle
+    DISP_SL_005["DISP-SL-005:<br/>Update running total; continue or finish"]
+    class DISP_SL_005 microStyle
+    DISP_SL_006(("DISP-SL-006:<br/>End container loop (sealed)"))
+    class DISP_SL_006 loopStyle
+  end
+  subgraph Labeling_and_Documentation["Labeling & Documentation"]
+    DISP_M_005[["DISP-M-005:<br/>Labeling, Reconciliation & Documentation"]]
+    class DISP_M_005 macroStyle
+    DISP_040["DISP-040:<br/>Label preview & content validation"]
+    class DISP_040 microStyle
+    DISP_042["DISP-042:<br/>Print & affix aggregate/kit label (if required)"]
+    class DISP_042 microStyle
+    DISP_042V["DISP-042V:<br/>Aggregate/kit label scanback verification"]
+    class DISP_042V microStyle
+    DISP_044["DISP-044:<br/>Label reconciliation (printed vs used vs voided)"]
+    class DISP_044 microStyle
+  end
+  subgraph Post-Dispensing["Post-Dispensing"]
+    DISP_M_006[["DISP-M-006:<br/>Post-Dispensing Transfer, TOR & ERP Posting"]]
+    class DISP_M_006 macroStyle
+    DISP_050["DISP-050:<br/>Assign storage/transfer location & initiate move"]
+    class DISP_050 microStyle
+    DISP_051["DISP-051:<br/>Handover scan at receiving area (chain-of-custody)"]
+    class DISP_051 microStyle
+    DISP_052A["DISP-052A:<br/>ERP GI posting acknowledgement check and retry queue"]
+    class DISP_052A microStyle
+    DISP_053["DISP-053:<br/>Variance reconciliation against BOM and policy"]
+    class DISP_053 microStyle
+    DISP_054["DISP-054:<br/>Close deviations/exceptions & attach evidence"]
+    class DISP_054 microStyle
+    DISP_055["DISP-055:<br/>Archive logs (CoA, WB slips, TOR) & finalize record"]
+    class DISP_055 microStyle
+  end
+  DISP_017 --> DEC_C_SEC_01
+  DEC_C_SEC_01 -->|Yes → Sealed| DISP_SL_001
+  DEC_C_SEC_01 -->|No → Weighing| DISP_L_001
+  DISP_M_001 --> DISP_M_002
+  DISP_M_002 --> DISP_M_003
+  DISP_M_002 --> DISP_M_004
+  DISP_M_003 --> DISP_M_005
+  DISP_M_004 --> DISP_M_005
+  DISP_M_005 --> DISP_M_006
+  DISP_001 --> DISP_002
+  DISP_002 --> DISP_003
+  DISP_003 --> DEC_DISP_004
+  DEC_DISP_004 -->|Yes| DISP_004
+  DISP_004 --> DEC_DISP_005
+  DEC_DISP_005 -.->|No → Trigger cleaning| DISP_005
+  DISP_003 --> DISP_006
+  DISP_003 --> DEC_DISP_008
+  DEC_DISP_008 -->|Yes| DISP_008
+  DISP_004 --> DISP_009
+  DISP_006 --> DISP_009
+  DISP_008 --> DISP_009
+  DISP_M_001 --> DISP_010
+  DISP_010 --> DISP_011
+  DISP_011 --> DISP_012
+  DISP_012 --> DISP_013
+  DISP_013 --> DISP_014
+  DISP_014 --> DISP_016
+  DISP_016 --> DEC_DISP_017
+  DEC_DISP_017 -->|Yes| DISP_017
+  DISP_L_001 --> DISP_020
+  DISP_020 --> DEC_DISP_021
+  DEC_DISP_021 -.->|Yes → Quarantine| DISP_021
+  DISP_020 --> DISP_022
+  DISP_022 --> DISP_023
+  DISP_023 --> DISP_024
+  DISP_024 --> DISP_025
+  DISP_025 --> DISP_026
+  DISP_026 --> DEC_DISP_026A
+  DEC_DISP_026A -->|Yes| DISP_026A
+  DISP_026 --> DEC_DISP_027
+  DEC_DISP_027 -->|Yes| DISP_027
+  DISP_027 --> DEC_DISP_027S
+  DEC_DISP_027S -.->|Yes → Spill workflow| DISP_027S
+  DISP_027S --> DISP_027C
+  DISP_027C --> DISP_027A
+  DISP_026 --> DEC_DISP_028
+  DEC_DISP_028 -.->|No → Offline capture| DISP_028
+  DISP_027 --> DEC_DISP_029
+  DEC_DISP_029 -.->|No → Handle per Q-WB-04| DISP_029
+  DEC_DISP_029 -.->|No → Handle per Q-WB-04| DISP_029
+  DISP_027 --> DISP_030
+  DISP_030 --> DEC_DISP_030V
+  DEC_DISP_030V -->|Yes| DISP_030V
+  DISP_030 --> DEC_DISP_030O
+  DEC_DISP_030O -.->|No → Offline capture| DISP_030O
+  DISP_030 --> DISP_031
+  DISP_031 -.->|exception| DISP_032
+  DISP_031 --> DISP_L_002
+  DISP_L_002 -.->|Target not reached| DISP_020
+  DISP_SL_001 --> DISP_SL_002
+  DISP_SL_002 --> DEC_DISP_SL_003
+  DEC_DISP_SL_003 -->|Yes| DISP_SL_003
+  DISP_SL_003 --> DISP_SL_004
+  DISP_SL_004 --> DISP_SL_005
+  DISP_SL_005 --> DISP_SL_006
+  DISP_SL_006 -.->|Target not reached| DISP_SL_002
+  DISP_L_002 --> DISP_040
+  DISP_SL_006 --> DISP_040
+  DISP_040 --> DISP_042
+  DISP_042 --> DEC_DISP_042V
+  DEC_DISP_042V -->|Yes| DISP_042V
+  DISP_042 --> DISP_044
+  DISP_044 --> DISP_050
+  DISP_050 --> DISP_051
+  DISP_051 --> DEC_DISP_052A
+  DEC_DISP_052A -->|Yes| DISP_052A
+  DISP_051 --> DISP_053
+  DISP_053 --> DISP_054
+  DISP_054 --> DISP_055

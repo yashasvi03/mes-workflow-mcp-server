@@ -739,7 +739,7 @@ function generateBeautifulMermaidDiagram(
 const server = new Server(
   {
     name: 'mes-workflow-server',
-    version: '2.2.0',
+    version: '2.3.0',
   },
   {
     capabilities: {
@@ -1569,7 +1569,7 @@ ${formatted}`,
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('MES Workflow MCP server v2.2.0 running on stdio');
+  console.error('MES Workflow MCP server v2.3.0 running on stdio');
 }
 
 main().catch((error) => {
