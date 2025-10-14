@@ -148,9 +148,9 @@
       "timestamp": "2025-10-14T09:46:45.297Z"
     },
     "Q-SEC-01": {
-      "selected_outcome": "Yes",
-      "rationale": "TechPharma uses sealed containers for all materials",
-      "timestamp": "2025-10-14T09:47:00.000Z"
+      "selected_outcome": "Weighing only",
+      "rationale": "TechPharma uses weighing path exclusively for all materials. No sealed containers in facility. All materials require balance verification and potency adjustments.",
+      "timestamp": "2025-10-14T16:22:07.561Z"
     },
     "Q-INV-02": {
       "selected_outcome": "Custom (per class)",
@@ -251,6 +251,36 @@
       "selected_outcome": "Remove excess to within ±X%",
       "rationale": "",
       "timestamp": "2025-10-14T09:44:09.520Z"
+    },
+    "Q-ENV-01": {
+      "selected_outcome": "Automated (historian/HVAC)",
+      "rationale": "Automated logging via historian; 1-5 min sampling; auto-attach to EBR",
+      "timestamp": "2025-10-14T16:26:27.769Z"
+    },
+    "Q-ENV-03": {
+      "selected_outcome": "Block until within spec",
+      "rationale": "Strict: no processing during excursions",
+      "timestamp": "2025-10-14T16:26:33.160Z"
+    },
+    "Q-QA-04": {
+      "selected_outcome": "Both (MES references external)",
+      "rationale": "MES holds summary & link to full QMS record",
+      "timestamp": "2025-10-14T16:31:04.587Z"
+    },
+    "Q-DMG-01": {
+      "selected_outcome": "Continue by adding new container",
+      "rationale": "With cleanup + waste logging; minor spills only",
+      "timestamp": "2025-10-14T16:31:10.653Z"
+    },
+    "Q-INV-06": {
+      "selected_outcome": "Return to stock (relabel & qty update)",
+      "rationale": "Return to stock remnants; Remaining qty captured; remnant label; status=Released",
+      "timestamp": "2025-10-14T16:31:15.409Z"
+    },
+    "Q-HSE-02": {
+      "selected_outcome": "Partial between batches",
+      "rationale": "Partial cleaning between batches; Full cleaning at campaign end (policy-timed)",
+      "timestamp": "2025-10-14T16:31:19.588Z"
     }
   }
 }
