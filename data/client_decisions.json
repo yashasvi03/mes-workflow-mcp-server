@@ -1,0 +1,256 @@
+{
+  "Demo Pharma": {
+    "Q-ERP-01": {
+      "selected_outcome": "SAP",
+      "rationale": "SAP performs lot determination; Picklist originates in SAP/EWM; MES enforces at execution",
+      "timestamp": "2025-01-14T10:00:00Z"
+    },
+    "Q-INV-02": {
+      "selected_outcome": "Custom (per class)",
+      "rationale": "APIs/Excipients with expiry → FEFO; Packaging → FIFO",
+      "timestamp": "2025-01-14T10:01:00Z"
+    },
+    "Q-INV-03": {
+      "selected_outcome": "Released only",
+      "rationale": "No on-hold usage at dispensing",
+      "timestamp": "2025-01-14T10:02:00Z"
+    },
+    "Q-WMS-01": {
+      "selected_outcome": "Yes",
+      "rationale": "WMS integrated; TO/staging confirmations flow via WMS",
+      "timestamp": "2025-01-14T10:03:00Z"
+    },
+    "Q-LIMS-01": {
+      "selected_outcome": "LIMS via integration",
+      "rationale": "Assay/LOD pulled into MES for adjusted qty",
+      "timestamp": "2025-01-14T10:04:00Z"
+    },
+    "Q-QA-02": {
+      "selected_outcome": "API-only",
+      "rationale": "All API weighments need verifier e-sign",
+      "timestamp": "2025-01-14T10:05:00Z"
+    },
+    "Q-WB-01": {
+      "selected_outcome": "Ethernet",
+      "rationale": "Ethernet connected balances; Primary path is digital capture",
+      "timestamp": "2025-01-14T10:06:00Z"
+    },
+    "Q-WB-02": {
+      "selected_outcome": "Yes (enforce)",
+      "rationale": "Suitability hard-gated by target band",
+      "timestamp": "2025-01-14T10:07:00Z"
+    },
+    "Q-WB-03": {
+      "selected_outcome": "Direct",
+      "rationale": "Direct weighing (default); By-difference allowed if manually chosen with reason",
+      "timestamp": "2025-01-14T10:08:00Z"
+    },
+    "Q-UOM-01": {
+      "selected_outcome": "ERP master",
+      "rationale": "ERP master is authority; MES uses ERP conversions (read-only)",
+      "timestamp": "2025-01-14T10:09:00Z"
+    },
+    "Q-UOM-02": {
+      "selected_outcome": "Precision by material",
+      "rationale": "Round to scale resolution/material SOP",
+      "timestamp": "2025-01-14T10:10:00Z"
+    },
+    "Q-LBL-01": {
+      "selected_outcome": "No",
+      "rationale": "No extra manual fields; All encoded in barcode; no free text",
+      "timestamp": "2025-01-14T10:11:00Z"
+    },
+    "Q-LBL-02": {
+      "selected_outcome": "GS1-128",
+      "rationale": "Standard label template/version locked",
+      "timestamp": "2025-01-14T10:12:00Z"
+    },
+    "Q-LBL-03": {
+      "selected_outcome": "Auto-void previous",
+      "rationale": "Auto-void previous on reprint; max_reprints = 1; audit trail retained",
+      "timestamp": "2025-01-14T10:13:00Z"
+    },
+    "Q-SEC-01": {
+      "selected_outcome": "No",
+      "rationale": "Material-specific: API-1 and PVP K30 use weighing path; Lactose uses sealed path (configured separately)",
+      "timestamp": "2025-01-14T10:14:00Z"
+    },
+    "Q-LOT-01": {
+      "selected_outcome": "Yes",
+      "rationale": "Multi-lot allowed; Traceability per lot maintained",
+      "timestamp": "2025-01-14T10:15:00Z"
+    },
+    "Q-LOT-02": {
+      "selected_outcome": "Yes",
+      "rationale": "Proportional potency; When multi-lot, adjust by contribution",
+      "timestamp": "2025-01-14T10:16:00Z"
+    },
+    "Q-CONS-01": {
+      "selected_outcome": "At usage",
+      "rationale": "GI posted when material is actually consumed",
+      "timestamp": "2025-01-14T10:17:00Z"
+    },
+    "Q-HSE-01": {
+      "selected_outcome": "Standard",
+      "rationale": "No HPAPI/special containment in this run",
+      "timestamp": "2025-01-14T10:18:00Z"
+    },
+    "Q-HR-01": {
+      "selected_outcome": "Block if expired",
+      "rationale": "Training gate enforced at start",
+      "timestamp": "2025-01-14T10:19:00Z"
+    },
+    "Q-ENV-02": {
+      "selected_outcome": "No",
+      "rationale": "No cold-chain/TOR; Materials are ambient in this scenario",
+      "timestamp": "2025-01-14T10:20:00Z"
+    },
+    "Q-WB-04": {
+      "selected_outcome": "Remove excess to within ±X%",
+      "rationale": "Remove excess to within ±0.5%; If not possible → QA deviation accept (fallback)",
+      "timestamp": "2025-01-14T10:21:00Z"
+    },
+    "Q-ENV-01": {
+      "selected_outcome": "Automated (historian/HVAC)",
+      "rationale": "Automated logging via historian; 1-5 min sampling; auto-attach to EBR",
+      "timestamp": "2025-01-14T10:22:00Z"
+    },
+    "Q-ENV-03": {
+      "selected_outcome": "Block until within spec",
+      "rationale": "Strict: no processing during excursions",
+      "timestamp": "2025-01-14T10:23:00Z"
+    },
+    "Q-QA-04": {
+      "selected_outcome": "Both (MES references external)",
+      "rationale": "MES holds summary & link to full QMS record",
+      "timestamp": "2025-01-14T10:24:00Z"
+    },
+    "Q-DMG-01": {
+      "selected_outcome": "Continue by adding new container",
+      "rationale": "With cleanup + waste logging; minor spills only",
+      "timestamp": "2025-01-14T10:25:00Z"
+    },
+    "Q-INV-06": {
+      "selected_outcome": "Return to stock (relabel & qty update)",
+      "rationale": "Return to stock remnants; Remaining qty captured; remnant label; status=Released",
+      "timestamp": "2025-01-14T10:26:00Z"
+    },
+    "Q-HSE-02": {
+      "selected_outcome": "Partial between batches",
+      "rationale": "Partial cleaning between batches; Full cleaning at campaign end (policy-timed)",
+      "timestamp": "2025-01-14T10:27:00Z"
+    }
+  },
+  "TechPharma": {
+    "Q-ERP-01": {
+      "selected_outcome": "MES",
+      "rationale": "TechPharma performs lot determination in MES rather than SAP",
+      "timestamp": "2025-10-14T09:46:45.297Z"
+    },
+    "Q-SEC-01": {
+      "selected_outcome": "Yes",
+      "rationale": "TechPharma uses sealed containers for all materials",
+      "timestamp": "2025-10-14T09:47:00.000Z"
+    },
+    "Q-INV-02": {
+      "selected_outcome": "Custom (per class)",
+      "rationale": "APIs/Excipients with expiry → FEFO; Packaging → FIFO",
+      "timestamp": "2025-10-14T09:47:18.985Z"
+    },
+    "Q-INV-03": {
+      "selected_outcome": "Released only",
+      "rationale": "No on-hold usage at dispensing",
+      "timestamp": "2025-10-14T09:47:22.838Z"
+    },
+    "Q-WMS-01": {
+      "selected_outcome": "Yes",
+      "rationale": "WMS integrated; TO/staging confirmations flow via WMS",
+      "timestamp": "2025-10-14T09:47:27.566Z"
+    },
+    "Q-LIMS-01": {
+      "selected_outcome": "LIMS via integration",
+      "rationale": "Assay/LOD pulled into MES for adjusted qty",
+      "timestamp": "2025-10-14T09:47:32.088Z"
+    },
+    "Q-QA-02": {
+      "selected_outcome": "API-only",
+      "rationale": "All API weighments need verifier e-sign",
+      "timestamp": "2025-10-14T09:51:40.727Z"
+    },
+    "Q-WB-01": {
+      "selected_outcome": "Ethernet",
+      "rationale": "Ethernet connected balances; Primary path is digital capture",
+      "timestamp": "2025-10-14T09:51:41.233Z"
+    },
+    "Q-WB-02": {
+      "selected_outcome": "Yes (enforce)",
+      "rationale": "Suitability hard-gated by target band",
+      "timestamp": "2025-10-14T09:52:14.733Z"
+    },
+    "Q-WB-03": {
+      "selected_outcome": "Direct",
+      "rationale": "Direct weighing (default); By-difference allowed if manually chosen with reason",
+      "timestamp": "2025-10-14T09:52:20.161Z"
+    },
+    "Q-UOM-01": {
+      "selected_outcome": "ERP master",
+      "rationale": "ERP master is authority; MES uses ERP conversions (read-only)",
+      "timestamp": "2025-10-14T09:52:56.816Z"
+    },
+    "Q-UOM-02": {
+      "selected_outcome": "Precision by material",
+      "rationale": "Round to scale resolution/material SOP",
+      "timestamp": "2025-10-14T09:53:02.846Z"
+    },
+    "Q-LBL-01": {
+      "selected_outcome": "No",
+      "rationale": "No extra manual fields; All encoded in barcode; no free text",
+      "timestamp": "2025-10-14T09:54:17.829Z"
+    },
+    "Q-LBL-02": {
+      "selected_outcome": "GS1-128",
+      "rationale": "Standard label template/version locked",
+      "timestamp": "2025-10-14T09:54:47.032Z"
+    },
+    "Q-LBL-03": {
+      "selected_outcome": "Auto-void previous",
+      "rationale": "Auto-void previous on reprint; max_reprints = 1; audit trail retained",
+      "timestamp": "2025-10-14T09:55:13.485Z"
+    },
+    "Q-LOT-01": {
+      "selected_outcome": "Yes",
+      "rationale": "",
+      "timestamp": "2025-10-14T09:43:19.408Z"
+    },
+    "Q-LOT-02": {
+      "selected_outcome": "Yes",
+      "rationale": "",
+      "timestamp": "2025-10-14T09:43:30.204Z"
+    },
+    "Q-CONS-01": {
+      "selected_outcome": "At usage",
+      "rationale": "",
+      "timestamp": "2025-10-14T09:43:34.211Z"
+    },
+    "Q-HSE-01": {
+      "selected_outcome": "Standard",
+      "rationale": "",
+      "timestamp": "2025-10-14T09:43:46.571Z"
+    },
+    "Q-HR-01": {
+      "selected_outcome": "Block if expired",
+      "rationale": "",
+      "timestamp": "2025-10-14T09:43:50.219Z"
+    },
+    "Q-ENV-02": {
+      "selected_outcome": "No",
+      "rationale": "",
+      "timestamp": "2025-10-14T09:44:04.314Z"
+    },
+    "Q-WB-04": {
+      "selected_outcome": "Remove excess to within ±X%",
+      "rationale": "",
+      "timestamp": "2025-10-14T09:44:09.520Z"
+    }
+  }
+}

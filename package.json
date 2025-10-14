@@ -1,0 +1,23 @@
+{
+  "name": "mes-workflow-mcp-server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MCP server for MES workflow configuration",
+  "main": "build/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "keywords": ["mcp", "mes", "workflow"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

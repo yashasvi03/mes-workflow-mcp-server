@@ -1,0 +1,380 @@
+[
+  {
+    "id": "Q-ERP-01",
+    "category": "Practice",
+    "question": "Where is batch/lot determination performed?",
+    "outcomes": ["SAP", "MES"],
+    "stage": "Material Allocation",
+    "affects": "Allocation path; Picklist source",
+    "notes": "Determines allocation engine and reservation strategy."
+  },
+  {
+    "id": "Q-INV-02",
+    "category": "Practice",
+    "question": "Material selection policy by class?",
+    "outcomes": ["FIFO", "FEFO", "Custom (per class)"],
+    "stage": "Material Allocation",
+    "affects": "Lot ranking rules",
+    "notes": "API vs excipient vs solvents vs packaging can differ."
+  },
+  {
+    "id": "Q-INV-03",
+    "category": "Practice",
+    "question": "Allowed lot statuses at dispensing?",
+    "outcomes": ["Released only", "Released+On-Hold (QA override)", "Site-specific"],
+    "stage": "Material Allocation",
+    "affects": "Lot eligibility",
+    "notes": "Prevents inadvertent use of wrong status."
+  },
+  {
+    "id": "Q-WMS-01",
+    "category": "Practice",
+    "question": "Is WMS integrated for picking/putaway?",
+    "outcomes": ["Yes", "No"],
+    "stage": "Material Allocation",
+    "affects": "Picklist/TO flow; staging confirmations",
+    "notes": "Defines staging data source."
+  },
+  {
+    "id": "Q-LIMS-01",
+    "category": "Practice",
+    "question": "Where do potency/assay/LOD values originate?",
+    "outcomes": ["LIMS via integration", "Manual entry", "ERP master"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Adjusted quantity calc; CoA sourcing",
+    "notes": "API potency source of truth."
+  },
+  {
+    "id": "Q-QA-02",
+    "category": "Practice",
+    "question": "Second-person verification policy?",
+    "outcomes": ["All weighments", "Threshold-based", "API-only", "Never"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Verification steps",
+    "notes": "Defines e-sign gates."
+  },
+  {
+    "id": "Q-WB-01",
+    "category": "Practice",
+    "question": "Balance connectivity?",
+    "outcomes": ["RS-232", "Ethernet", "Not connected"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Data capture method",
+    "notes": "If not connected, enforce manual entry with attachment."
+  },
+  {
+    "id": "Q-WB-02",
+    "category": "Practice",
+    "question": "Balance class/least count by target band enforced?",
+    "outcomes": ["Yes (enforce)", "No (inform only)"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Suitability check",
+    "notes": "Fitness-for-use per method."
+  },
+  {
+    "id": "Q-WB-03",
+    "category": "Practice",
+    "question": "Weighing method (default)?",
+    "outcomes": ["Direct", "By difference", "Checkweigh"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Sub-steps within loop",
+    "notes": "Method can be overridden per material."
+  },
+  {
+    "id": "Q-UOM-01",
+    "category": "Practice",
+    "question": "UoM conversion authority?",
+    "outcomes": ["ERP master", "MES override"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Conversion tables; audit",
+    "notes": "Prevents conversion drift."
+  },
+  {
+    "id": "Q-UOM-02",
+    "category": "Practice",
+    "question": "Rounding policy at dispense?",
+    "outcomes": ["Bankers", "Up", "Down", "Precision by material"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Target rounding; variance",
+    "notes": "Avoids rounding-induced deviations."
+  },
+  {
+    "id": "Q-LBL-01",
+    "category": "Practice",
+    "question": "Do labels capture additional manual fields?",
+    "outcomes": ["Yes", "No"],
+    "stage": "Labeling & Documentation",
+    "affects": "Data entry steps",
+    "notes": "E.g., special storage notes."
+  },
+  {
+    "id": "Q-LBL-02",
+    "category": "Practice",
+    "question": "Label symbology and content standard?",
+    "outcomes": ["GS1-128", "Code128", "QR", "Site standard"],
+    "stage": "Labeling & Documentation",
+    "affects": "Template validation",
+    "notes": "Governed by site master data."
+  },
+  {
+    "id": "Q-LBL-03",
+    "category": "Practice",
+    "question": "Reprint/void policy?",
+    "outcomes": ["QA approval required", "Auto-void previous", "Allow n reprints"],
+    "stage": "Labeling & Documentation",
+    "affects": "Exception path",
+    "notes": "Prevents duplicate labels; parameterize max reprints."
+  },
+  {
+    "id": "Q-SEC-01",
+    "category": "Practice",
+    "question": "Sealed container dispensing for this material?",
+    "outcomes": ["Yes", "No"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Choose weigh-loop vs sealed-loop",
+    "notes": "If Yes, no balance weigh; take declared weight from label."
+  },
+  {
+    "id": "Q-LOT-01",
+    "category": "Practice",
+    "question": "Are multiple lots allowed per batch/material?",
+    "outcomes": ["Yes", "No"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Split quantities across lots",
+    "notes": "Traceability per lot maintained."
+  },
+  {
+    "id": "Q-LOT-02",
+    "category": "Practice",
+    "question": "If multiple lots used, apply proportional potency?",
+    "outcomes": ["Yes", "No"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Adjusted qty calculation",
+    "notes": "Impacts running total logic."
+  },
+  {
+    "id": "Q-CONS-01",
+    "category": "Practice",
+    "question": "When is consumption posted to ERP?",
+    "outcomes": ["At dispensing", "At usage", "Backflush at batch close"],
+    "stage": "Post-Dispensing",
+    "affects": "Posting step placement",
+    "notes": "Defines GI timing."
+  },
+  {
+    "id": "Q-HSE-01",
+    "category": "Practice",
+    "question": "Material handling category?",
+    "outcomes": ["Standard", "Hazardous", "HPAPI", "Allergen"],
+    "stage": "Pre-Dispensing",
+    "affects": "Containment/PPE/interlocks",
+    "notes": "Drives HSE steps & segregation."
+  },
+  {
+    "id": "Q-HR-01",
+    "category": "Practice",
+    "question": "Training enforcement at step?",
+    "outcomes": ["Block if expired", "Warn only"],
+    "stage": "Pre-Dispensing",
+    "affects": "Access control",
+    "notes": "Role & training gates."
+  },
+  {
+    "id": "Q-ENV-02",
+    "category": "Practice",
+    "question": "Cold-chain/TOR tracking required?",
+    "outcomes": ["Yes", "No"],
+    "stage": "Pre-Dispensing",
+    "affects": "TOR timers; exposure logs",
+    "notes": "Applies to temperature-sensitive materials."
+  },
+  {
+    "id": "Q-WB-04",
+    "category": "Practice",
+    "question": "Out-of-tolerance weigh handling policy?",
+    "outcomes": ["Remove excess to within ±X%", "Auto-accept within X%", "Accept with deviation (QA)", "Abort & scrap/restart"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Material usage; quality",
+    "notes": "Defines actions if dispensed quantity is outside allowed range; parameterize X%."
+  },
+  {
+    "id": "Q-ENV-01",
+    "category": "Practice",
+    "question": "Environmental conditions logging method?",
+    "outcomes": ["Automated (historian/HVAC)", "Manual entry", "Not integrated (manual capture required)"],
+    "stage": "Pre-Dispensing",
+    "affects": "Batch record completeness; compliance",
+    "notes": "Specifies how T/RH/DP are captured during dispensing."
+  },
+  {
+    "id": "Q-ENV-03",
+    "category": "Practice",
+    "question": "Action if environmental parameters out of limits?",
+    "outcomes": ["Block until within spec", "Proceed with deviation", "Alarm only"],
+    "stage": "Pre-Dispensing",
+    "affects": "Process flow; QA",
+    "notes": "Determines whether dispensing can proceed during excursions."
+  },
+  {
+    "id": "Q-QA-04",
+    "category": "Practice",
+    "question": "Deviation and exception documentation?",
+    "outcomes": ["MES only", "External QMS only", "Both (MES references external)"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Record integrity; review",
+    "notes": "Controls capture/approval location and cross-references."
+  },
+  {
+    "id": "Q-DMG-01",
+    "category": "Practice",
+    "question": "Spillage during dispensing – how to proceed?",
+    "outcomes": ["Abort & restart (scrap spilled portion)", "Continue by adding new container", "Continue if minor spill after cleanup"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Reconciliation; deviation",
+    "notes": "Policies by spill magnitude; requires waste logging & cleanup."
+  },
+  {
+    "id": "Q-INV-06",
+    "category": "Practice",
+    "question": "Unused/leftover material return policy?",
+    "outcomes": ["Return to stock (relabel & qty update)", "Scrap all unused", "Hold for campaign reuse"],
+    "stage": "Post-Dispensing",
+    "affects": "Inventory accuracy; cost",
+    "notes": "Controls remnant handling; may require re-test or QA visual."
+  },
+  {
+    "id": "Q-HSE-02",
+    "category": "Practice",
+    "question": "Cleaning frequency for same-product campaigns?",
+    "outcomes": ["Full each batch", "Partial between batches", "Full at campaign end"],
+    "stage": "Post-Dispensing",
+    "affects": "Turnaround; cross-contamination",
+    "notes": "Defines inter-batch cleaning templates and limits."
+  },
+  {
+    "id": "C-CLN-01",
+    "category": "Runtime",
+    "question": "Is equipment cleaning validity within hold time?",
+    "outcomes": ["Yes", "No → Trigger cleaning"],
+    "stage": "Pre-Dispensing",
+    "affects": "Branch to cleaning tasks",
+    "notes": "Logic from cleaning records/hold times."
+  },
+  {
+    "id": "C-CAL-01",
+    "category": "Runtime",
+    "question": "Is balance calibration/verification valid?",
+    "outcomes": ["Yes", "No → Calibrate/Block"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Calibration step or block",
+    "notes": "From CMMS/ERP or MES master data."
+  },
+  {
+    "id": "C-ENV-01",
+    "category": "Runtime",
+    "question": "Are RT/RH/DP within limits?",
+    "outcomes": ["Yes", "No → Pause & deviation"],
+    "stage": "Pre-Dispensing",
+    "affects": "Halt/Deviation",
+    "notes": "Historian or manual check per Q-ENV-01/03."
+  },
+  {
+    "id": "C-REL-01",
+    "category": "Runtime",
+    "question": "Is lot released and within re-test date?",
+    "outcomes": ["Yes", "No → Block/Deviation"],
+    "stage": "Material Allocation",
+    "affects": "Eligibility",
+    "notes": "From LIMS/ERP; prevents use of un-released lots."
+  },
+  {
+    "id": "C-TOR-01",
+    "category": "Runtime",
+    "question": "Has time-out-of-refrigeration (TOR) limit exceeded?",
+    "outcomes": ["No", "Yes → Quarantine"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Stop & quarantine",
+    "notes": "Timer/equipment/historian data."
+  },
+  {
+    "id": "C-NET-01",
+    "category": "Runtime",
+    "question": "Is network connection available?",
+    "outcomes": ["Yes", "No → Offline capture"],
+    "stage": "Global (all stages)",
+    "affects": "Fallback to manual path",
+    "notes": "Continuously monitored; at any point, route to manual capture per policy."
+  },
+  {
+    "id": "C-STAT-01",
+    "category": "Runtime",
+    "question": "Has lot status changed since staging?",
+    "outcomes": ["No", "Yes → Re-allocate"],
+    "stage": "Material Allocation",
+    "affects": "Exception flow",
+    "notes": "Subscribe/poll ERP/WMS; re-validate eligibility."
+  },
+  {
+    "id": "C-DMG-01",
+    "category": "Runtime",
+    "question": "Is container damaged or seal broken?",
+    "outcomes": ["No", "Yes → Quarantine"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Stop & NCR",
+    "notes": "Visual inspection gate at each container."
+  },
+  {
+    "id": "C-TOL-01",
+    "category": "Runtime",
+    "question": "Is the weigh within tolerance for this container/step?",
+    "outcomes": ["Yes", "No → Handle per Q-WB-04"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Tolerance gate at scale",
+    "notes": "Drives adjust/re-weigh/deviation/abort branches."
+  },
+  {
+    "id": "C-SPILL-01",
+    "category": "Runtime",
+    "question": "Did a spill occur during transfer/weigh?",
+    "outcomes": ["No", "Yes → Spill workflow"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Spill cleanup; waste logging",
+    "notes": "Ties to Q-DMG-01 policy and inventory adjustment."
+  },
+  {
+    "id": "C-VERIFY-01",
+    "category": "Runtime",
+    "question": "Container/label verification gate (ID/scan/expiry)?",
+    "outcomes": ["Yes", "No → Quarantine/Block/Re-allocate"],
+    "stage": "Material Allocation; Labeling",
+    "affects": "Eligibility & traceability",
+    "notes": "Combines ID/scan match and expiry-at-dispense check into a single gate."
+  },
+  {
+    "id": "C-WB-CONN-01",
+    "category": "Runtime",
+    "question": "Is instrument handshake OK (balance/driver)?",
+    "outcomes": ["Yes", "No → Manual capture or Block"],
+    "stage": "Weighing & Dispensing",
+    "affects": "Data capture path",
+    "notes": "Continuously monitored during weighing; on failure, auto-route to manual capture with verifier."
+  },
+  {
+    "id": "C-GI-ACK-01",
+    "category": "Runtime",
+    "question": "Was ERP goods-issue/consumption acknowledged?",
+    "outcomes": ["Yes", "No → Retry/Queue"],
+    "stage": "Post-Dispensing",
+    "affects": "Posting reliability",
+    "notes": "Prevents silent posting failures; escalates before batch close."
+  },
+  {
+    "id": "C-LBL-01",
+    "category": "Runtime",
+    "question": "Did label print and verification succeed (unique ID valid)?",
+    "outcomes": ["Yes", "No → Reprint/Void"],
+    "stage": "Labeling & Documentation",
+    "affects": "Label governance",
+    "notes": "Ensures template/version and scan-back pass before proceeding."
+  }
+]
