@@ -212,7 +212,180 @@ function findLoopBodyStart(loopStartId: string, tasks: Task[]): string | null {
   return firstInLoop ? firstInLoop.id : null;
 }
 
-// Generate beautiful Mermaid diagram
+// Generate improved Mermaid diagram
+function generateMermaidDiagram(
+  filteredTasks: Task[],
+  allTasks: Task[],
+  decisions: { [key: string]: ClientDecision }
+): string {
+  let mermaid = 'graph TD\n';
+
+  // Add styling
+  mermaid += '  classDef macroStyle fill:#e1f5ff,stroke:#0288d1,stroke-width:3px\n';
+  mermaid += '  classDef microStyle fill:#fff9e1,stroke:#fbc02d,stroke-width:2px\n';
+  mermaid += '  classDef loopStyle fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px\n';
+  mermaid += '  classDef exceptionStyle fill:#ffebee,stroke:#d32f2f,stroke-width:2px,stroke-dasharray: 5 5\n';
+  mermaid += '  classDef decisionStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px\n\n';
+
+  const includedTaskIds = new Set(filteredTasks.map((t) => t.id));
+
+  // Group tasks by stage for subgraphs
+  const tasksByStage: { [stage: string]: Task[] } = {};
+  for (const task of filteredTasks) {
+    if (!tasksByStage[task.stage]) {
+      tasksByStage[task.stage] = [];
+    }
+    tasksByStage[task.stage].push(task);
+  }
+
+  // Track decision nodes we've created
+  const createdDecisionNodes = new Set<string>();
+
+  // Generate nodes with subgraphs
+  const stageOrder = [
+    'Pre-Dispensing',
+    'Material Allocation',
+    'Weighing & Dispensing',
+    'Labeling & Documentation',
+    'Post-Dispensing',
+  ];
+
+  for (const stage of stageOrder) {
+    if (!tasksByStage[stage]) continue;
+
+    const stageId = stage.replace(/\s+/g, '_').replace(/&/g, 'and');
+    mermaid += `\n  subgraph ${stageId}["${stage}"]\n`;
+
+    for (const task of tasksByStage[stage]) {
+      const nodeId = task.id.replace(/-/g, '_');
+      const label = `${task.id}:<br/>${task.name}`;
+
+      let nodeShape = '';
+      let styleClass = '';
+
+      if (task.type === 'Macro') {
+        nodeShape = `${nodeId}[["${label}"]]`;
+        styleClass = 'macroStyle';
+      } else if (task.type === 'Loop-Start' || task.type === 'Loop-End') {
+        nodeShape = `${nodeId}(("${label}"))`;
+        styleClass = 'loopStyle';
+      } else {
+        nodeShape = `${nodeId}["${label}"]`;
+        styleClass = task.edge_type === 'exception' ? 'exceptionStyle' : 'microStyle';
+      }
+
+      mermaid += `    ${nodeShape}\n`;
+      if (styleClass) {
+        mermaid += `    class ${nodeId} ${styleClass}\n`;
+      }
+    }
+
+    mermaid += `  end\n`;
+  }
+
+  mermaid += '\n';
+
+  // Check if Q-SEC-01 is set to "Both (material-dependent)"
+  const secDecision = decisions['Q-SEC-01'];
+  const isBothPaths = secDecision?.selected_outcome === 'Both (material-dependent)';
+
+  // Special handling for DISP-017 routing when "Both" is selected
+  if (isBothPaths && includedTaskIds.has('DISP-017')) {
+    const disp017NodeId = 'DISP_017';
+    const decisionNodeId = 'DEC_C_SEC_01';
+
+    // Add C-SEC-01 decision diamond
+    mermaid += `  ${decisionNodeId}{Is container sealed?}\n`;
+    mermaid += `  class ${decisionNodeId} decisionStyle\n`;
+    mermaid += `  ${disp017NodeId} --> ${decisionNodeId}\n`;
+
+    // Route to sealed path
+    if (includedTaskIds.has('DISP-SL-001')) {
+      mermaid += `  ${decisionNodeId} -->|Yes → Sealed| DISP_SL_001\n`;
+    }
+
+    // Route to weighing path
+    if (includedTaskIds.has('DISP-L-001')) {
+      mermaid += `  ${decisionNodeId} -->|No → Weighing| DISP_L_001\n`;
+    }
+
+    createdDecisionNodes.add(decisionNodeId);
+  }
+
+  // Generate edges with smart linking
+  for (const task of filteredTasks) {
+    const nodeId = task.id.replace(/-/g, '_');
+
+    // Skip DISP-L-001 and DISP-SL-001 predecessors if "Both" path - already handled above
+    if (isBothPaths && (task.id === 'DISP-L-001' || task.id === 'DISP-SL-001')) {
+      continue;
+    }
+
+    if (task.predecessors && task.predecessors.length > 0) {
+      // Filter predecessors to only those in the workflow
+      let validPredecessors = task.predecessors.filter((pred) => includedTaskIds.has(pred));
+
+      // If NO valid predecessors, find closest ancestor
+      if (validPredecessors.length === 0) {
+        const closestAncestor = findClosestIncludedAncestor(task, allTasks, includedTaskIds);
+        if (closestAncestor) {
+          validPredecessors = [closestAncestor];
+        }
+      }
+
+      // Add edges from valid predecessors
+      for (const pred of validPredecessors) {
+        const predId = pred.replace(/-/g, '_');
+
+        // Check if this edge needs a decision node
+        if (task.guard_condition && task.decision_id && task.decision_id.startsWith('C-')) {
+          // Runtime condition - create decision diamond
+          const decisionNodeId = `DEC_${task.id.replace(/-/g, '_')}`;
+
+          if (!createdDecisionNodes.has(decisionNodeId)) {
+            // Extract simple condition label
+            let conditionLabel = task.guard_condition;
+            if (conditionLabel.length > 40) {
+              conditionLabel = task.decision_id; // Use decision ID if too long
+            }
+
+            mermaid += `  ${decisionNodeId}{${conditionLabel}}\n`;
+            mermaid += `  class ${decisionNodeId} decisionStyle\n`;
+            mermaid += `  ${predId} --> ${decisionNodeId}\n`;
+
+            createdDecisionNodes.add(decisionNodeId);
+          }
+
+          // Determine edge label based on outcome
+          const edgeLabel = task.decision_outcome || 'Yes';
+          const edgeStyle = task.edge_type === 'exception' ? '-.->' : '-->';
+          mermaid += `  ${decisionNodeId} ${edgeStyle}|${edgeLabel}| ${nodeId}\n`;
+        } else {
+          // Regular edge
+          const edgeStyle = task.edge_type === 'exception' ? '-.->|exception|' : '-->';
+          mermaid += `  ${predId} ${edgeStyle} ${nodeId}\n`;
+        }
+      }
+    }
+
+    // Handle loop back edges
+    if (task.type === 'Loop-End' && task.loop_exit_condition) {
+      const loopStartId = findLoopStart(task.id);
+      const loopBodyStartId = findLoopBodyStart(loopStartId, filteredTasks);
+
+      if (loopBodyStartId) {
+        const bodyStartNodeId = loopBodyStartId.replace(/-/g, '_');
+        const loopCondition = task.loop_exit_condition.replace(/RunningTotal >= Target/gi, 'Target not reached');
+
+        mermaid += `  ${nodeId} -.->|${loopCondition}| ${bodyStartNodeId}\n`;
+      }
+    }
+  }
+
+  return mermaid;
+}
+
+// Generate beautiful Mermaid diagram with enhanced UI
 function generateBeautifulMermaidDiagram(
   filteredTasks: Task[],
   allTasks: Task[],
@@ -236,24 +409,43 @@ function generateBeautifulMermaidDiagram(
   mermaid += `  classDef exceptionStyle fill:#ffcdd2,stroke:#c62828,stroke-width:3px,stroke-dasharray:8 4,color:#b71c1c,font-weight:bold\n`;
   mermaid += `  classDef decisionStyle fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#e65100,font-weight:bold\n`;
   mermaid += `  classDef convergeStyle fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#1b5e20,font-weight:bold\n`;
-  mermaid += `  classDef dualPathStyle fill:#e1bee7,stroke:#6a1b9a,stroke-width:3px,color:#4a148c,font-weight:bold\n\n`;
+  
+  if (isBothPaths) {
+    mermaid += `  classDef dualPathStyle fill:#e1bee7,stroke:#6a1b9a,stroke-width:3px,color:#4a148c,font-weight:bold\n\n`;
+  } else {
+    mermaid += `\n`;
+  }
 
+  // ========================================
   // Add START node
+  // ========================================
+  mermaid += `  %% ========================================\n`;
+  mermaid += `  %% START\n`;
+  mermaid += `  %% ========================================\n\n`;
   mermaid += `  START([🏁 START DISPENSING])\n`;
   mermaid += `  style START fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px\n\n`;
 
-  // Pre-Dispensing Stage
+  // ========================================
+  // STAGE 1: Pre-Dispensing
+  // ========================================
+  mermaid += `  %% ========================================\n`;
+  mermaid += `  %% STAGE 1: PRE-DISPENSING\n`;
+  mermaid += `  %% ========================================\n\n`;
+  
   mermaid += `  M1["📋 PRE-DISPENSING &<br/>ROOM READINESS"]\n`;
   mermaid += `  class M1 macroStyle\n`;
   mermaid += `  START --> M1\n\n`;
 
-  // Material Allocation Stage
+  // ========================================
+  // STAGE 2: Material Allocation
+  // ========================================
+  mermaid += `  %% ========================================\n`;
+  mermaid += `  %% STAGE 2: MATERIAL ALLOCATION\n`;
+  mermaid += `  %% ========================================\n\n`;
+  
   mermaid += `  M2["📦 MATERIAL IDENTIFICATION<br/>ALLOCATION & STAGING"]\n`;
-  mermaid += `  class M2 macroStyle\n\n`;
-
-  // Weighing & Dispensing Stage
-  mermaid += `  M3["⚖️ WEIGHING &<br/>DISPENSING"]\n`;
-  mermaid += `  class M3 macroStyle\n\n`;
+  mermaid += `  class M2 macroStyle\n`;
+  mermaid += `  M1 ==> M2\n\n`;
 
   // Add allocation decision highlight
   if (usesSAP) {
@@ -264,31 +456,83 @@ function generateBeautifulMermaidDiagram(
     mermaid += `  style T015 fill:#e3f2fd,stroke:#1565c0,stroke-width:3px,color:#0d47a1,font-weight:bold\n\n`;
   }
 
+  // ========================================
+  // STAGE 3: Weighing & Dispensing
+  // ========================================
+  mermaid += `  %% ========================================\n`;
+  mermaid += `  %% STAGE 3: WEIGHING & DISPENSING\n`;
+  mermaid += `  %% ========================================\n\n`;
+  
+  mermaid += `  M3["⚖️ WEIGHING &<br/>DISPENSING"]\n`;
+  mermaid += `  class M3 macroStyle\n`;
+  mermaid += `  M2 ==> M3\n\n`;
+
   // Add dual-path routing if applicable
   if (isBothPaths) {
     mermaid += `  ROUTE{"🔀 CONTAINER<br/>SEALED?<br/>(Material-Dependent)"}\n`;
     mermaid += `  class ROUTE dualPathStyle\n`;
     mermaid += `  M3 --> ROUTE\n\n`;
-    
-    mermaid += `  CONVERGE["🔗 PATHS CONVERGE"]\n`;
-    mermaid += `  class CONVERGE convergeStyle\n\n`;
   }
 
-  // Labeling & Documentation Stage
+  // ========================================
+  // STAGE 4: Labeling & Documentation
+  // ========================================
+  mermaid += `  %% ========================================\n`;
+  mermaid += `  %% STAGE 4: LABELING & DOCUMENTATION\n`;
+  mermaid += `  %% ========================================\n\n`;
+  
   mermaid += `  M5["🏷️ LABELING, RECONCILIATION<br/>& DOCUMENTATION"]\n`;
   mermaid += `  class M5 macroStyle\n\n`;
 
-  // Post-Dispensing Stage
+  if (isBothPaths) {
+    mermaid += `  CONVERGE["🔗 PATHS CONVERGE"]\n`;
+    mermaid += `  class CONVERGE convergeStyle\n`;
+    mermaid += `  CONVERGE ==> M5\n\n`;
+  }
+
+  // ========================================
+  // STAGE 5: Post-Dispensing
+  // ========================================
+  mermaid += `  %% ========================================\n`;
+  mermaid += `  %% STAGE 5: POST-DISPENSING\n`;
+  mermaid += `  %% ========================================\n\n`;
+  
   mermaid += `  M6["📤 POST-DISPENSING<br/>TRANSFER & ERP POSTING"]\n`;
-  mermaid += `  class M6 macroStyle\n\n`;
+  mermaid += `  class M6 macroStyle\n`;
+  mermaid += `  M5 ==> M6\n\n`;
 
+  // ========================================
   // Add COMPLETE node
+  // ========================================
+  mermaid += `  %% ========================================\n`;
+  mermaid += `  %% END\n`;
+  mermaid += `  %% ========================================\n\n`;
+  
   mermaid += `  COMPLETE([🎉 DISPENSING COMPLETE])\n`;
-  mermaid += `  style COMPLETE fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px\n\n`;
+  mermaid += `  style COMPLETE fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px\n`;
+  mermaid += `  M6 ==> COMPLETE\n\n`;
 
-  // Note: This is a simplified version for demonstration
-  // In production, you would add all the detailed task nodes and connections
-  // based on the filteredTasks array, similar to the previous implementation
+  // Now use the standard diagram generation for all the detailed nodes
+  const detailedDiagram = generateMermaidDiagram(filteredTasks, allTasks, decisions);
+  
+  // Extract just the node and edge definitions (skip the header and class definitions)
+  const lines = detailedDiagram.split('\n');
+  let inSubgraph = false;
+  let detailedContent = '';
+  
+  for (const line of lines) {
+    if (line.includes('subgraph')) {
+      inSubgraph = true;
+    }
+    if (inSubgraph || line.includes('-->') || line.includes('-.->')  || line.includes('==>')) {
+      detailedContent += line + '\n';
+    }
+    if (line.includes('end') && inSubgraph) {
+      inSubgraph = false;
+    }
+  }
+
+  mermaid += detailedContent;
 
   return mermaid;
 }
@@ -390,7 +634,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'generate_workflow',
-      description: 'Generate a Mermaid workflow diagram based on client decisions and automatically save it to client_workflows.json. This filters tasks based on Practice decisions and shows all Runtime exception paths.',
+      description: 'Generate a Mermaid workflow diagram based on client decisions and automatically save it to client_workflows.json. This filters tasks based on Practice decisions and shows all Runtime exception paths. Version 2.2 includes beautiful enhanced UI with emojis and professional styling.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -817,7 +1061,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           return shouldIncludeTask(task, decisions);
         });
 
-        // Generate beautiful Mermaid diagram
+        // Generate beautiful Mermaid diagram with enhanced UI
         const mermaid = generateBeautifulMermaidDiagram(filteredTasks, allTasks, decisions, client_name);
 
         // Calculate metadata
@@ -859,6 +1103,13 @@ ${Object.entries(decisions)
   .slice(0, 10)
   .map(([id, data]) => `- ${id} = "${data.selected_outcome}"`)
   .join('\n')}${Object.keys(decisions).length > 10 ? `\n... and ${Object.keys(decisions).length - 10} more` : ''}
+
+**Improvements in v2.2:**
+✅ Beautiful enhanced UI with emojis and professional colors
+✅ Clear START 🏁 and COMPLETE 🎉 nodes
+✅ Visual hierarchy with blue macros and purple loops
+✅ Exception paths highlighted in red dashed boxes
+✅ Decision diamonds in orange for runtime conditions
 
 **Workflow Diagram:**
 
