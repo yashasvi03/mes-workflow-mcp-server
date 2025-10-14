@@ -5,10 +5,14 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
+import { execFile } from 'child_process';  
+import { promisify } from 'util';          
+
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -386,6 +390,7 @@ function generateMermaidDiagram(
 }
 
 // Generate beautiful Mermaid diagram with enhanced UI
+// Generate beautiful Mermaid diagram with enhanced UI
 function generateBeautifulMermaidDiagram(
   filteredTasks: Task[],
   allTasks: Task[],
@@ -409,130 +414,323 @@ function generateBeautifulMermaidDiagram(
   mermaid += `  classDef exceptionStyle fill:#ffcdd2,stroke:#c62828,stroke-width:3px,stroke-dasharray:8 4,color:#b71c1c,font-weight:bold\n`;
   mermaid += `  classDef decisionStyle fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#e65100,font-weight:bold\n`;
   mermaid += `  classDef convergeStyle fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#1b5e20,font-weight:bold\n`;
-  
-  if (isBothPaths) {
-    mermaid += `  classDef dualPathStyle fill:#e1bee7,stroke:#6a1b9a,stroke-width:3px,color:#4a148c,font-weight:bold\n\n`;
-  } else {
-    mermaid += `\n`;
-  }
+  mermaid += `  classDef dualPathStyle fill:#e1bee7,stroke:#6a1b9a,stroke-width:3px,color:#4a148c,font-weight:bold\n\n`;
 
   // ========================================
-  // Add START node
+  // START NODE
   // ========================================
-  mermaid += `  %% ========================================\n`;
-  mermaid += `  %% START\n`;
-  mermaid += `  %% ========================================\n\n`;
   mermaid += `  START([🏁 START DISPENSING])\n`;
   mermaid += `  style START fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px\n\n`;
 
   // ========================================
-  // STAGE 1: Pre-Dispensing
+  // STAGE 1: PRE-DISPENSING
   // ========================================
-  mermaid += `  %% ========================================\n`;
-  mermaid += `  %% STAGE 1: PRE-DISPENSING\n`;
-  mermaid += `  %% ========================================\n\n`;
-  
   mermaid += `  M1["📋 PRE-DISPENSING &<br/>ROOM READINESS"]\n`;
   mermaid += `  class M1 macroStyle\n`;
   mermaid += `  START --> M1\n\n`;
 
+  mermaid += `  T001["👤 Training & Role Gate"]\n`;
+  mermaid += `  T002["📝 Line Clearance Request"]\n`;
+  mermaid += `  T003["🧹 Verify Batch Clearance<br/>& Remove Residuals"]\n`;
+  mermaid += `  class T001,T002,T003 microStyle\n\n`;
+
+  mermaid += `  M1 --> T001\n`;
+  mermaid += `  T001 --> T002\n`;
+  mermaid += `  T002 --> T003\n\n`;
+
+  // Cleaning Decision
+  mermaid += `  D004{"⏰ Cleaning<br/>Hold-Time Valid?"}\n`;
+  mermaid += `  T004["✓ Hold-Time Check"]\n`;
+  mermaid += `  T005["⚠️ RE-CLEAN ROOM<br/>& Record"]\n`;
+  mermaid += `  class D004 decisionStyle\n`;
+  mermaid += `  class T004 microStyle\n`;
+  mermaid += `  class T005 exceptionStyle\n\n`;
+
+  mermaid += `  T003 --> D004\n`;
+  mermaid += `  D004 -->|YES| T004\n`;
+  mermaid += `  D004 -.->|NO - Expired| T005\n`;
+  mermaid += `  T005 -.-> T004\n\n`;
+
+  // Parallel Checks
+  mermaid += `  T006["🌡️ Capture Environment<br/>RT/RH/DP"]\n`;
+  mermaid += `  T008["⚖️ Balance Calibration<br/>Verification"]\n`;
+  mermaid += `  class T006,T008 microStyle\n\n`;
+
+  mermaid += `  T003 --> T006\n`;
+  mermaid += `  T003 --> T008\n\n`;
+
+  // QA Gate
+  mermaid += `  T009["✅ QA Room Readiness<br/>Inspection & E-Sign"]\n`;
+  mermaid += `  class T009 convergeStyle\n\n`;
+
+  mermaid += `  T004 --> T009\n`;
+  mermaid += `  T006 --> T009\n`;
+  mermaid += `  T008 --> T009\n\n`;
+
   // ========================================
-  // STAGE 2: Material Allocation
+  // STAGE 2: MATERIAL ALLOCATION
   // ========================================
-  mermaid += `  %% ========================================\n`;
-  mermaid += `  %% STAGE 2: MATERIAL ALLOCATION\n`;
-  mermaid += `  %% ========================================\n\n`;
-  
   mermaid += `  M2["📦 MATERIAL IDENTIFICATION<br/>ALLOCATION & STAGING"]\n`;
   mermaid += `  class M2 macroStyle\n`;
-  mermaid += `  M1 ==> M2\n\n`;
+  mermaid += `  T009 ==> M2\n\n`;
 
-  // Add allocation decision highlight
+  mermaid += `  T010["📄 Retrieve Production<br/>Order & BOM"]\n`;
+  mermaid += `  T011["🔄 Sync Material Master<br/>Data"]\n`;
+  mermaid += `  T012["📊 Fetch Available<br/>Inventory Lots"]\n`;
+  mermaid += `  T013["🔍 Filter by Status<br/>& Retest Validity"]\n`;
+  mermaid += `  class T010,T011,T012,T013 microStyle\n\n`;
+
+  mermaid += `  M2 --> T010\n`;
+  mermaid += `  T010 --> T011\n`;
+  mermaid += `  T011 --> T012\n`;
+  mermaid += `  T012 --> T013\n\n`;
+
+  // SAP or MES Allocation
   if (usesSAP) {
     mermaid += `  T014["🎯 SAP/ERP BATCH<br/>DETERMINATION"]\n`;
-    mermaid += `  style T014 fill:#bbdefb,stroke:#1565c0,stroke-width:3px,color:#0d47a1,font-weight:bold\n\n`;
+    mermaid += `  style T014 fill:#bbdefb,stroke:#1565c0,stroke-width:3px,color:#0d47a1,font-weight:bold\n`;
+    mermaid += `  T013 --> T014\n\n`;
+    mermaid += `  T016["📍 Reserve & Stage<br/>to Dispensing Area"]\n`;
+    mermaid += `  T017["🔎 Identify Container<br/>& Verify Allocation"]\n`;
+    mermaid += `  class T016,T017 microStyle\n`;
+    mermaid += `  T014 --> T016\n`;
   } else {
     mermaid += `  T015["🎯 MES LOT ALLOCATION<br/>with FIFO/FEFO Policy"]\n`;
-    mermaid += `  style T015 fill:#e3f2fd,stroke:#1565c0,stroke-width:3px,color:#0d47a1,font-weight:bold\n\n`;
+    mermaid += `  style T015 fill:#e3f2fd,stroke:#1565c0,stroke-width:3px,color:#0d47a1,font-weight:bold\n`;
+    mermaid += `  T013 --> T015\n\n`;
+    mermaid += `  T016["📍 Reserve & Stage<br/>to Dispensing Area"]\n`;
+    mermaid += `  T017["🔎 Identify Container<br/>& Verify Allocation"]\n`;
+    mermaid += `  class T016,T017 microStyle\n`;
+    mermaid += `  T015 --> T016\n`;
   }
 
+  mermaid += `  T016 --> T017\n\n`;
+
   // ========================================
-  // STAGE 3: Weighing & Dispensing
+  // STAGE 3: WEIGHING & DISPENSING
   // ========================================
-  mermaid += `  %% ========================================\n`;
-  mermaid += `  %% STAGE 3: WEIGHING & DISPENSING\n`;
-  mermaid += `  %% ========================================\n\n`;
-  
   mermaid += `  M3["⚖️ WEIGHING &<br/>DISPENSING"]\n`;
   mermaid += `  class M3 macroStyle\n`;
-  mermaid += `  M2 ==> M3\n\n`;
+  mermaid += `  T017 ==> M3\n\n`;
 
-  // Add dual-path routing if applicable
   if (isBothPaths) {
+    // Dual-path routing
     mermaid += `  ROUTE{"🔀 CONTAINER<br/>SEALED?<br/>(Material-Dependent)"}\n`;
     mermaid += `  class ROUTE dualPathStyle\n`;
     mermaid += `  M3 --> ROUTE\n\n`;
-  }
 
-  // ========================================
-  // STAGE 4: Labeling & Documentation
-  // ========================================
-  mermaid += `  %% ========================================\n`;
-  mermaid += `  %% STAGE 4: LABELING & DOCUMENTATION\n`;
-  mermaid += `  %% ========================================\n\n`;
-  
-  mermaid += `  M5["🏷️ LABELING, RECONCILIATION<br/>& DOCUMENTATION"]\n`;
-  mermaid += `  class M5 macroStyle\n\n`;
+    // Weighing Path
+    mermaid += `  LOOP_W_START(("🔄 START<br/>WEIGHING<br/>LOOP"))\n`;
+    mermaid += `  class LOOP_W_START loopStyle\n`;
+    mermaid += `  ROUTE -->|NO - Weigh| LOOP_W_START\n\n`;
 
-  if (isBothPaths) {
+    mermaid += `  T020["📦 Select Next<br/>Container"]\n`;
+    mermaid += `  class T020 microStyle\n`;
+    mermaid += `  LOOP_W_START --> T020\n\n`;
+
+    mermaid += `  D021{"🔍 Container<br/>Damaged?"}\n`;
+    mermaid += `  T021["⛔ QUARANTINE<br/>& Replace"]\n`;
+    mermaid += `  class D021 decisionStyle\n`;
+    mermaid += `  class T021 exceptionStyle\n`;
+    mermaid += `  T020 --> D021\n`;
+    mermaid += `  D021 -.->|YES| T021\n`;
+    mermaid += `  D021 -->|NO| T022\n\n`;
+
+    mermaid += `  T022["⚖️ Balance Suitability<br/>Check"]\n`;
+    mermaid += `  T023["📝 Select Weighing<br/>Method"]\n`;
+    mermaid += `  T024["⚖️ Tare Container"]\n`;
+    mermaid += `  T025["🧪 Pull Assay & CoA<br/>Compute Adjusted Qty"]\n`;
+    mermaid += `  T026["🔢 Apply UoM Conversion<br/>& Rounding"]\n`;
+    mermaid += `  class T022,T023,T024,T025,T026 microStyle\n\n`;
+
+    mermaid += `  T022 --> T023\n`;
+    mermaid += `  T023 --> T024\n`;
+    mermaid += `  T024 --> T025\n`;
+    mermaid += `  T025 --> T026\n\n`;
+
+    mermaid += `  T027["⚖️ WEIGH MATERIAL"]\n`;
+    mermaid += `  style T027 fill:#fff59d,stroke:#f57f17,stroke-width:3px,color:#f57f17,font-weight:bold,font-size:15px\n`;
+    mermaid += `  T026 --> T027\n\n`;
+
+    mermaid += `  D027S{"💧 Spill<br/>Detected?"}\n`;
+    mermaid += `  T027S["⚠️ SPILL WORKFLOW<br/>Cleanup & Log"]\n`;
+    mermaid += `  class D027S decisionStyle\n`;
+    mermaid += `  class T027S exceptionStyle\n`;
+    mermaid += `  T027 --> D027S\n`;
+    mermaid += `  D027S -.->|YES| T027S\n`;
+    mermaid += `  D027S -->|NO| T029\n\n`;
+
+    mermaid += `  D029{"📏 Within<br/>Tolerance?"}\n`;
+    mermaid += `  T029["⚠️ DEVIATION<br/>Handle per Policy"]\n`;
+    mermaid += `  class D029 decisionStyle\n`;
+    mermaid += `  class T029 exceptionStyle\n`;
+    mermaid += `  D029 -.->|NO| T029\n`;
+    mermaid += `  D029 -->|YES| T030W\n\n`;
+
+    mermaid += `  T030W["🏷️ Print & Affix<br/>Container Label"]\n`;
+    mermaid += `  T030VW["✓ Label Scanback<br/>Verification"]\n`;
+    mermaid += `  class T030W,T030VW microStyle\n`;
+    mermaid += `  T030W --> T030VW\n\n`;
+
+    mermaid += `  T031W["➕ Update Running Total"]\n`;
+    mermaid += `  class T031W microStyle\n`;
+    mermaid += `  T030VW --> T031W\n\n`;
+
+    mermaid += `  D031W{"🎯 Target<br/>Reached?"}\n`;
+    mermaid += `  class D031W decisionStyle\n`;
+    mermaid += `  T031W --> D031W\n\n`;
+
+    mermaid += `  LOOP_W_END(("🔄 END<br/>WEIGHING<br/>LOOP"))\n`;
+    mermaid += `  class LOOP_W_END loopStyle\n`;
+    mermaid += `  D031W -.->|NO| T020\n`;
+    mermaid += `  D031W -->|YES| LOOP_W_END\n\n`;
+
+    // Sealed Path
+    mermaid += `  LOOP_S_START(("🔄 START<br/>SEALED<br/>LOOP"))\n`;
+    mermaid += `  class LOOP_S_START loopStyle\n`;
+    mermaid += `  ROUTE -->|YES - Sealed| LOOP_S_START\n\n`;
+
+    mermaid += `  T_S_002["📦 Scan Sealed Container<br/>Capture Declared Mass"]\n`;
+    mermaid += `  T_S_003["🔍 Verify Integrity<br/>& Eligibility"]\n`;
+    mermaid += `  T_S_004["🏷️ Print Dispensed<br/>Container Label"]\n`;
+    mermaid += `  T_S_005["➕ Update Running Total"]\n`;
+    mermaid += `  class T_S_002,T_S_003,T_S_004,T_S_005 microStyle\n\n`;
+
+    mermaid += `  LOOP_S_START --> T_S_002\n`;
+    mermaid += `  T_S_002 --> T_S_003\n`;
+    mermaid += `  T_S_003 --> T_S_004\n`;
+    mermaid += `  T_S_004 --> T_S_005\n\n`;
+
+    mermaid += `  D_S_005{"🎯 Target<br/>Reached?"}\n`;
+    mermaid += `  class D_S_005 decisionStyle\n`;
+    mermaid += `  T_S_005 --> D_S_005\n\n`;
+
+    mermaid += `  LOOP_S_END(("🔄 END<br/>SEALED<br/>LOOP"))\n`;
+    mermaid += `  class LOOP_S_END loopStyle\n`;
+    mermaid += `  D_S_005 -.->|NO| T_S_002\n`;
+    mermaid += `  D_S_005 -->|YES| LOOP_S_END\n\n`;
+
+    // Convergence
     mermaid += `  CONVERGE["🔗 PATHS CONVERGE"]\n`;
     mermaid += `  class CONVERGE convergeStyle\n`;
-    mermaid += `  CONVERGE ==> M5\n\n`;
+    mermaid += `  LOOP_W_END --> CONVERGE\n`;
+    mermaid += `  LOOP_S_END --> CONVERGE\n\n`;
+  } else if (isWeighingOnly) {
+    // Weighing only path (TechPharma style)
+    mermaid += `  LOOP_W_START(("🔄 START<br/>WEIGHING<br/>LOOP"))\n`;
+    mermaid += `  class LOOP_W_START loopStyle\n`;
+    mermaid += `  M3 --> LOOP_W_START\n\n`;
+
+    mermaid += `  T020["📦 Select Next<br/>Container"]\n`;
+    mermaid += `  class T020 microStyle\n`;
+    mermaid += `  LOOP_W_START --> T020\n\n`;
+
+    mermaid += `  D021{"🔍 Container<br/>Damaged?"}\n`;
+    mermaid += `  T021["⛔ QUARANTINE<br/>& Replace"]\n`;
+    mermaid += `  class D021 decisionStyle\n`;
+    mermaid += `  class T021 exceptionStyle\n`;
+    mermaid += `  T020 --> D021\n`;
+    mermaid += `  D021 -.->|YES| T021\n`;
+    mermaid += `  D021 -->|NO| T022\n\n`;
+
+    mermaid += `  T022["⚖️ Balance Suitability<br/>Check"]\n`;
+    mermaid += `  T023["📝 Select Weighing<br/>Method"]\n`;
+    mermaid += `  T024["⚖️ Tare Container"]\n`;
+    mermaid += `  T025["🧪 Pull Assay & CoA<br/>Compute Adjusted Qty"]\n`;
+    mermaid += `  T026["🔢 Apply UoM Conversion<br/>& Rounding"]\n`;
+    mermaid += `  class T022,T023,T024,T025,T026 microStyle\n\n`;
+
+    mermaid += `  T022 --> T023\n`;
+    mermaid += `  T023 --> T024\n`;
+    mermaid += `  T024 --> T025\n`;
+    mermaid += `  T025 --> T026\n\n`;
+
+    mermaid += `  T027["⚖️ WEIGH MATERIAL"]\n`;
+    mermaid += `  style T027 fill:#fff59d,stroke:#f57f17,stroke-width:3px,color:#f57f17,font-weight:bold,font-size:15px\n`;
+    mermaid += `  T026 --> T027\n\n`;
+
+    mermaid += `  D027S{"💧 Spill<br/>Detected?"}\n`;
+    mermaid += `  T027S["⚠️ SPILL WORKFLOW<br/>Cleanup & Log"]\n`;
+    mermaid += `  class D027S decisionStyle\n`;
+    mermaid += `  class T027S exceptionStyle\n`;
+    mermaid += `  T027 --> D027S\n`;
+    mermaid += `  D027S -.->|YES| T027S\n`;
+    mermaid += `  D027S -->|NO| T029\n\n`;
+
+    mermaid += `  D029{"📏 Within<br/>Tolerance?"}\n`;
+    mermaid += `  T029["⚠️ DEVIATION<br/>Handle per Policy"]\n`;
+    mermaid += `  class D029 decisionStyle\n`;
+    mermaid += `  class T029 exceptionStyle\n`;
+    mermaid += `  D029 -.->|NO| T029\n`;
+    mermaid += `  D029 -->|YES| T030W\n\n`;
+
+    mermaid += `  T030W["🏷️ Print & Affix<br/>Container Label"]\n`;
+    mermaid += `  T030VW["✓ Label Scanback<br/>Verification"]\n`;
+    mermaid += `  class T030W,T030VW microStyle\n`;
+    mermaid += `  T030W --> T030VW\n\n`;
+
+    mermaid += `  T031W["➕ Update Running Total"]\n`;
+    mermaid += `  class T031W microStyle\n`;
+    mermaid += `  T030VW --> T031W\n\n`;
+
+    mermaid += `  D031W{"🎯 Target<br/>Reached?"}\n`;
+    mermaid += `  class D031W decisionStyle\n`;
+    mermaid += `  T031W --> D031W\n\n`;
+
+    mermaid += `  LOOP_W_END(("🔄 END<br/>WEIGHING<br/>LOOP"))\n`;
+    mermaid += `  class LOOP_W_END loopStyle\n`;
+    mermaid += `  D031W -.->|NO| T020\n`;
+    mermaid += `  D031W -->|YES| LOOP_W_END\n\n`;
+
+    mermaid += `  CONVERGE["🔗 PATH COMPLETE"]\n`;
+    mermaid += `  class CONVERGE convergeStyle\n`;
+    mermaid += `  LOOP_W_END --> CONVERGE\n\n`;
   }
 
   // ========================================
-  // STAGE 5: Post-Dispensing
+  // STAGE 4: LABELING & DOCUMENTATION
   // ========================================
-  mermaid += `  %% ========================================\n`;
-  mermaid += `  %% STAGE 5: POST-DISPENSING\n`;
-  mermaid += `  %% ========================================\n\n`;
-  
+  mermaid += `  M5["🏷️ LABELING, RECONCILIATION<br/>& DOCUMENTATION"]\n`;
+  mermaid += `  class M5 macroStyle\n`;
+  mermaid += `  CONVERGE ==> M5\n\n`;
+
+  mermaid += `  T040["👁️ Label Preview<br/>& Validation"]\n`;
+  mermaid += `  T042["📋 Print Aggregate/<br/>Kit Label"]\n`;
+  mermaid += `  T044["✅ Label Reconciliation<br/>(Printed vs Used vs Voided)"]\n`;
+  mermaid += `  class T040,T042,T044 microStyle\n\n`;
+
+  mermaid += `  M5 --> T040\n`;
+  mermaid += `  T040 --> T042\n`;
+  mermaid += `  T042 --> T044\n\n`;
+
+  // ========================================
+  // STAGE 5: POST-DISPENSING
+  // ========================================
   mermaid += `  M6["📤 POST-DISPENSING<br/>TRANSFER & ERP POSTING"]\n`;
   mermaid += `  class M6 macroStyle\n`;
-  mermaid += `  M5 ==> M6\n\n`;
+  mermaid += `  T044 ==> M6\n\n`;
+
+  mermaid += `  T050["📍 Assign Storage<br/>Location"]\n`;
+  mermaid += `  T051["🤝 Handover Scan<br/>(Chain of Custody)"]\n`;
+  mermaid += `  T052A["✓ ERP GI Posting<br/>Acknowledgement"]\n`;
+  mermaid += `  T053["📊 Variance<br/>Reconciliation"]\n`;
+  mermaid += `  T054["✅ Close Deviations<br/>& Attach Evidence"]\n`;
+  mermaid += `  T055["📁 Archive Logs<br/>& Finalize Record"]\n`;
+  mermaid += `  class T050,T051,T052A,T053,T054,T055 microStyle\n\n`;
+
+  mermaid += `  M6 --> T050\n`;
+  mermaid += `  T050 --> T051\n`;
+  mermaid += `  T051 --> T052A\n`;
+  mermaid += `  T052A --> T053\n`;
+  mermaid += `  T053 --> T054\n`;
+  mermaid += `  T054 --> T055\n\n`;
 
   // ========================================
-  // Add COMPLETE node
+  // END NODE
   // ========================================
-  mermaid += `  %% ========================================\n`;
-  mermaid += `  %% END\n`;
-  mermaid += `  %% ========================================\n\n`;
-  
   mermaid += `  COMPLETE([🎉 DISPENSING COMPLETE])\n`;
   mermaid += `  style COMPLETE fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px\n`;
-  mermaid += `  M6 ==> COMPLETE\n\n`;
-
-  // Now use the standard diagram generation for all the detailed nodes
-  const detailedDiagram = generateMermaidDiagram(filteredTasks, allTasks, decisions);
-  
-  // Extract just the node and edge definitions (skip the header and class definitions)
-  const lines = detailedDiagram.split('\n');
-  let inSubgraph = false;
-  let detailedContent = '';
-  
-  for (const line of lines) {
-    if (line.includes('subgraph')) {
-      inSubgraph = true;
-    }
-    if (inSubgraph || line.includes('-->') || line.includes('-.->')  || line.includes('==>')) {
-      detailedContent += line + '\n';
-    }
-    if (line.includes('end') && inSubgraph) {
-      inSubgraph = false;
-    }
-  }
-
-  mermaid += detailedContent;
+  mermaid += `  T055 ==> COMPLETE\n`;
 
   return mermaid;
 }
@@ -1210,27 +1408,32 @@ ${workflow.mermaid_code}
 
         // Create timestamped filename
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-        const filename = `workflow_${workflow.stage.replace(/\s+/g, '-')}_${timestamp}.${exportFormat}`;
-        const filepath = path.join(clientDir, filename);
+        const mmdFilename = `workflow_${workflow.stage.replace(/\s+/g, '-')}_${timestamp}.mmd`;
+        const outputFilename = `workflow_${workflow.stage.replace(/\s+/g, '-')}_${timestamp}.${exportFormat}`;
+        const mmdPath = path.join(clientDir, mmdFilename);
+        const outputPath = path.join(clientDir, outputFilename);
 
-        // Use Mermaid.ink API to generate PNG
         try {
-          const mermaidCode = workflow.mermaid_code;
-          const encodedMermaid = Buffer.from(mermaidCode).toString('base64');
-          const mermaidInkUrl = `https://mermaid.ink/img/${encodedMermaid}`;
+          // Write Mermaid code to .mmd file
+          await fs.writeFile(mmdPath, workflow.mermaid_code, 'utf-8');
 
-          // Fetch the image
-          const response = await fetch(mermaidInkUrl);
+          // Use child_process exec for simpler command execution
+          const { exec } = await import('child_process');
+          const { promisify } = await import('util');
+          const execAsync = promisify(exec);
           
-          if (!response.ok) {
-            throw new Error(`Mermaid.ink API returned ${response.status}`);
-          }
+          // Build the command with proper quoting for Windows paths
+          const command = `npx mmdc -i "${mmdPath}" -o "${outputPath}" -b white -w 2400 -H 3000`;
 
-          const arrayBuffer = await response.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
+          // Execute the command
+          const { stdout, stderr } = await execAsync(command, {
+            cwd: path.join(__dirname, '..'),
+            maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large outputs
+          });
 
-          // Save to file
-          await fs.writeFile(filepath, buffer);
+          // Get file size for reporting
+          const stats = await fs.stat(outputPath);
+          const fileSizeMB = (stats.size / (1024 * 1024)).toFixed(2);
 
           return {
             content: [
@@ -1238,14 +1441,18 @@ ${workflow.mermaid_code}
                 type: 'text',
                 text: `✅ Workflow exported successfully!
 
-**Client:** ${client_name}
-**File:** ${filename}
-**Location:** ${filepath}
-**Stage:** ${workflow.stage}
-**Version:** ${workflow.version}
-**Format:** ${exportFormat.toUpperCase()}
+      **Client:** ${client_name}
+      **File:** ${outputFilename}
+      **Location:** ${outputPath}
+      **Stage:** ${workflow.stage}
+      **Version:** ${workflow.version}
+      **Format:** ${exportFormat.toUpperCase()}
+      **Resolution:** 2400x3000px
+      **File Size:** ${fileSizeMB} MB
 
-The workflow diagram has been saved and is ready for client delivery.`,
+      **Source File:** ${mmdFilename} (Mermaid source code)
+
+      The workflow diagram has been saved and is ready for client delivery.`,
               },
             ],
           };
@@ -1254,7 +1461,16 @@ The workflow diagram has been saved and is ready for client delivery.`,
             content: [
               {
                 type: 'text',
-                text: `Error exporting workflow: ${error instanceof Error ? error.message : String(error)}\n\nPlease ensure you have internet connectivity to use the Mermaid.ink API.`,
+                text: `Error exporting workflow: ${error instanceof Error ? error.message : String(error)}
+
+      **Debug Info:**
+      Input file: ${mmdPath}
+      Output file: ${outputPath}
+
+      **Troubleshooting:**
+      - Try running manually: npx mmdc -i "${mmdPath}" -o "${outputPath}"
+      - Ensure @mermaid-js/mermaid-cli is installed: npm list @mermaid-js/mermaid-cli
+      - Check if Chromium was downloaded: npx puppeteer browsers install chrome`,
               },
             ],
             isError: true,

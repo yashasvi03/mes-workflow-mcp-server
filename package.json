@@ -1,19 +1,29 @@
 {
   "name": "mes-workflow-mcp-server",
-  "version": "1.0.0",
+  "version": "2.2.0",
   "type": "module",
-  "description": "MCP server for MES workflow configuration",
+  "description": "MCP server for MES workflow configuration and visualization",
   "main": "build/index.js",
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",
-    "dev": "tsx src/index.ts"
+    "dev": "tsx src/index.ts",
+    "watch": "tsc --watch"
   },
-  "keywords": ["mcp", "mes", "workflow"],
+  "keywords": [
+    "mcp",
+    "mes",
+    "workflow",
+    "pharmaceutical",
+    "manufacturing",
+    "mermaid"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4"
+    "@mermaid-js/mermaid-cli": "^11.12.0",
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "puppeteer": "^23.11.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
