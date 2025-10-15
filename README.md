@@ -119,7 +119,7 @@ This tool captures these variations through **28 Practice decisions** and genera
 
 1. **Clone the repository**
 ```bash
-   git clone <repository-url>
+   git clone https://github.com/yashasvi03/mes-workflow-mcp-server
    cd mes-workflow-builder
 ```
 
