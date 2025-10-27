@@ -1,6 +1,6 @@
-# Granulation Stage Implementation Plan
+# MES Workflow Builder - Implementation Plan v3.0+
 
-**Version:** 3.0.0 (Major update - new stage family)
+**Version:** 3.0+ (Major architectural evolution)
 **Date:** 2025-10-27
 **Status:** Planning Phase - DO NOT IMPLEMENT YET
 
@@ -8,7 +8,24 @@
 
 ## Overview
 
-Extending the MES Workflow MCP Server to support the **Granulation** stage family, adding 56 tasks and 34 decisions alongside the existing Dispensing workflow.
+This document outlines a two-part evolution of the MES Workflow MCP Server:
+
+1. **Part A (v3.0)**: Extend to support **Granulation** stage family (56 tasks, 34 decisions)
+2. **Part B (v3.1+)**: Add **LLM-augmented workflow builder** for client-specific customizations
+
+Both parts work together to create a system that is:
+- ✅ **Structured** with base library of validated tasks/decisions
+- ✅ **Flexible** with LLM-powered customizations
+- ✅ **Auditable** with full traceability and version control
+- ✅ **Scalable** with promotion pathway for validated customs
+
+---
+
+# PART A: Granulation Stage Extension (v3.0)
+
+## Objective
+
+Extend the MES Workflow MCP Server to support the **Granulation** stage family, adding 56 tasks and 34 decisions alongside the existing Dispensing workflow.
 
 ---
 
@@ -173,8 +190,6 @@ Same update as above.
 
 #### Proposed Architecture
 
-##### Option A: Stage-Specific Functions (RECOMMENDED)
-
 ```typescript
 // 1. Rename existing function
 function generateBeautifulDispensingDiagram(
@@ -322,7 +337,7 @@ version: '3.0.0'
 
 ---
 
-## Phase 3: Testing & Validation
+## Phase 3: Testing & Validation (v3.0)
 
 ### 3.1 Data Integrity Checks
 
@@ -349,7 +364,386 @@ version: '3.0.0'
 
 ---
 
-## Phase 4: Execution Checklist
+# PART B: LLM-Augmented Architecture (v3.1+)
+
+## Objective
+
+Enable **client-specific workflow customizations** using LLM intelligence while maintaining the structured base library as the foundation.
+
+---
+
+## User Requirements Summary
+
+Based on user questionnaire responses:
+- ✅ **Primary Use Case**: Handle client-specific variations (e.g., nitrogen purging for HPAPI)
+- ✅ **Control Level**: Medium - Auto-approve minor additions, review major changes
+- ✅ **Task Scope**: Hybrid - Client-specific by default, promotable to base library
+- ✅ **Versioning**: Lock client workflows after generation (immutable)
+
+---
+
+## Architecture Overview
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    Base Library (Source of Truth)            │
+│  • tasks.json (Dispensing, Granulation, etc.)                │
+│  • decisions.json (Practice & Runtime)                       │
+└────────────────────────┬─────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│              Client Configuration Layer                      │
+│  • client_decisions.json (existing)                          │
+│  • client_custom.json (NEW - custom tasks/decisions)        │
+│  • client_workflows.json (existing - now versioned)          │
+└────────────────────────┬─────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│                  Generation Engine                           │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ 1. Base Workflow Generation (Deterministic)         │   │
+│  │    • Use base library + client decisions            │   │
+│  │    • Existing logic (fast, predictable)             │   │
+│  └───────────────────┬─────────────────────────────────┘   │
+│                      ↓                                       │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ 2. LLM Augmentation (Conditional)                   │   │
+│  │    • Analyze client context                         │   │
+│  │    • Suggest custom tasks                           │   │
+│  │    • Classify as "minor" or "major"                 │   │
+│  └───────────────────┬─────────────────────────────────┘   │
+│                      ↓                                       │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ 3. Auto-Approval / Review Gate                      │   │
+│  │    • Minor: Auto-add (e.g., "add photo step")      │   │
+│  │    • Major: Show diff, require approval             │   │
+│  └───────────────────┬─────────────────────────────────┘   │
+│                      ↓                                       │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ 4. Finalize & Lock Workflow                         │   │
+│  │    • Generate Mermaid diagram                       │   │
+│  │    • Version & timestamp                            │   │
+│  │    • Store with metadata                            │   │
+│  └─────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## New Data Structures
+
+### 1. client_custom.json (NEW)
+
+```json
+{
+  "TechPharma": {
+    "custom_tasks": [
+      {
+        "id": "DISP-CUSTOM-001",
+        "name": "Perform nitrogen purging for HPAPI",
+        "type": "Micro",
+        "stage": "Weighing & Dispensing",
+        "parent_id": "DISP-M-003",
+        "insert_after": "DISP-024",
+        "actor": "Operator",
+        "integration": "MES",
+        "metadata": {
+          "source": "llm_suggested",
+          "reason": "Client handles HPAPI requiring inert atmosphere",
+          "severity": "minor",
+          "auto_approved": true,
+          "created_by": "system",
+          "created_date": "2025-10-27T10:30:00Z",
+          "approved_by": null,
+          "approved_date": null,
+          "promotion_candidate": false
+        },
+        "inputs": "Nitrogen supply; Purge SOP",
+        "outputs": "Purge completion log",
+        "predecessors": ["DISP-024"],
+        "edge_type": "control",
+        "logs": "Purge Log",
+        "controls": "Timer & flow meter verification"
+      }
+    ],
+    "custom_decisions": [
+      {
+        "id": "TECH-Q-01",
+        "category": "Practice",
+        "question": "Nitrogen purging required for HPAPIs?",
+        "outcomes": ["Yes", "No"],
+        "stage": "Weighing & Dispensing",
+        "affects": "Adds purging step after tare",
+        "notes": "Client-specific for HPAPI handling",
+        "metadata": {
+          "source": "client_requested",
+          "severity": "major",
+          "auto_approved": false,
+          "approved_by": "user@techpharma.com",
+          "approved_date": "2025-10-27T11:00:00Z"
+        }
+      }
+    ]
+  }
+}
+```
+
+### 2. Enhanced client_workflows.json
+
+```json
+{
+  "TechPharma": {
+    "versions": [
+      {
+        "version": 1,
+        "last_generated": "2025-10-15T10:00:00Z",
+        "stage": "All",
+        "base_library_version": "3.0.0",
+        "custom_tasks_count": 2,
+        "custom_decisions_count": 1,
+        "mermaid_code": "...",
+        "metadata": {
+          "task_count": 138,
+          "decision_count": 49,
+          "macro_count": 6,
+          "loop_count": 4,
+          "augmentation_summary": {
+            "added_tasks": ["DISP-CUSTOM-001", "DISP-CUSTOM-002"],
+            "added_decisions": ["TECH-Q-01"],
+            "llm_reasoning": "Added nitrogen purging and additional photo documentation for HPAPI compliance",
+            "auto_approved_count": 1,
+            "user_approved_count": 1
+          }
+        },
+        "locked": true,
+        "exported": true,
+        "export_path": "exports/TechPharma/workflow_v1.png"
+      }
+    ],
+    "current_version": 1
+  }
+}
+```
+
+---
+
+## New MCP Tools (v3.1+)
+
+### Tool 1: `add_custom_task`
+
+Add a client-specific custom task that extends the base workflow library.
+
+```typescript
+{
+  name: 'add_custom_task',
+  description: 'Add a client-specific custom task that extends the base workflow library.',
+  inputSchema: {
+    client_name: 'string',
+    task: {
+      id: 'string', // e.g., "DISP-CUSTOM-001"
+      name: 'string',
+      type: '"Micro" | "Macro"',
+      stage: 'string',
+      parent_id: 'string',
+      insert_after: 'string', // Task ID to insert after
+      actor: 'string',
+      // ... other task fields
+    },
+    source: '"client_requested" | "llm_suggested"',
+    rationale: 'string' // Why is this task needed?
+  }
+}
+```
+
+### Tool 2: `analyze_client_context`
+
+Use LLM to analyze client context and suggest custom tasks/decisions.
+
+```typescript
+{
+  name: 'analyze_client_context',
+  description: 'Use LLM to analyze client context and suggest custom tasks/decisions. Returns suggestions classified by severity.',
+  inputSchema: {
+    client_name: 'string',
+    stage: 'string',
+    context: 'string', // e.g., "HPAPI manufacturing, EU GMP, nitrogen blanketing required"
+    existing_decisions: 'object'
+  }
+}
+
+// Returns:
+{
+  suggestions: [
+    {
+      type: 'task',
+      id: 'DISP-CUSTOM-001',
+      name: 'Perform nitrogen purging',
+      severity: 'minor', // Auto-approvable
+      reasoning: 'HPAPI context requires inert atmosphere per EU GMP Annex 15',
+      insert_after: 'DISP-024',
+      confidence: 0.92
+    },
+    {
+      type: 'decision',
+      id: 'TECH-Q-01',
+      question: 'Nitrogen purging required?',
+      severity: 'major', // Requires approval
+      reasoning: 'Fundamental process change affecting material safety',
+      confidence: 0.88
+    }
+  ]
+}
+```
+
+### Tool 3: `generate_augmented_workflow`
+
+Generate workflow with LLM-suggested customizations.
+
+```typescript
+{
+  name: 'generate_augmented_workflow',
+  description: 'Generate workflow with LLM-suggested customizations. Minor changes auto-approved, major changes presented for review.',
+  inputSchema: {
+    client_name: 'string',
+    stage: 'string',
+    context: 'string', // Optional client context for LLM analysis
+    mode: '"strict" | "augmented"', // strict = base only, augmented = with LLM
+    auto_approve_minor: 'boolean' // Default true
+  }
+}
+```
+
+### Tool 4: `promote_custom_task`
+
+Promote a validated custom task to the base library.
+
+```typescript
+{
+  name: 'promote_custom_task',
+  description: 'Promote a validated custom task to the base library for use by all clients.',
+  inputSchema: {
+    client_name: 'string',
+    custom_task_id: 'string', // e.g., "DISP-CUSTOM-001"
+    new_base_id: 'string', // e.g., "DISP-056" (next available)
+    rationale: 'string'
+  }
+}
+```
+
+### Tool 5: `list_custom_tasks`
+
+List all custom tasks/decisions for a client.
+
+```typescript
+{
+  name: 'list_custom_tasks',
+  description: 'List all custom tasks/decisions for a client, with promotion candidates highlighted.',
+  inputSchema: {
+    client_name: 'string',
+    show_promotion_candidates: 'boolean'
+  }
+}
+```
+
+---
+
+## LLM Classification Logic
+
+### Minor vs Major Determination
+
+```typescript
+function classifySuggestion(suggestion: Suggestion): 'minor' | 'major' {
+  // AUTO-APPROVE (minor) if:
+  // - Adds documentation step (photo, attachment, comment)
+  // - Adds logging step (no process change)
+  // - Adds verification step (scan, check) without new decision
+  // - Inserts after leaf node (no downstream impact)
+
+  // REQUIRE APPROVAL (major) if:
+  // - Adds new decision point (branching logic)
+  // - Modifies critical path (QA gates, release steps)
+  // - Adds integration point (ERP, LIMS)
+  // - Changes loop structure
+  // - Affects regulatory compliance (GMP, 21 CFR Part 11)
+
+  const minorKeywords = ['photo', 'attach', 'log', 'verify scan', 'comment'];
+  const majorKeywords = ['decision', 'approve', 'integrate', 'post to', 'release'];
+
+  if (majorKeywords.some(kw => suggestion.name.toLowerCase().includes(kw))) {
+    return 'major';
+  }
+
+  if (minorKeywords.some(kw => suggestion.name.toLowerCase().includes(kw))) {
+    return 'minor';
+  }
+
+  // Default to major for safety
+  return 'major';
+}
+```
+
+---
+
+## Example User Flow
+
+```typescript
+// 1. User configures client with context
+save_client_decision({
+  client_name: "TechPharma",
+  decision_id: "Q-HSE-01",
+  selected_outcome: "HPAPI"
+})
+
+// 2. User requests augmented workflow
+generate_augmented_workflow({
+  client_name: "TechPharma",
+  stage: "All",
+  context: "HPAPI manufacturing, nitrogen blanketing required, EU GMP Annex 15 compliance",
+  mode: "augmented",
+  auto_approve_minor: true
+})
+
+// Response:
+// ✅ Base workflow generated (136 tasks, 48 decisions)
+// 🤖 LLM Analysis: Found 3 suggestions
+//    ✅ AUTO-APPROVED (minor): Add photo attachment after nitrogen purge
+//    ✅ AUTO-APPROVED (minor): Add secondary verification log
+//    ⚠️  REVIEW REQUIRED (major): Add decision point "Nitrogen purity check passed?"
+//
+// Please review major change:
+//   Decision: TECH-Q-02 "Nitrogen purity check passed?"
+//   Outcomes: Yes (proceed) | No (re-purge)
+//   Insert after: DISP-CUSTOM-001
+//   Reasoning: EU GMP Annex 15 requires documented verification of inert atmosphere
+//
+// Approve? [Yes/No/Edit]
+
+// 3. User approves
+approve_suggestion({
+  client_name: "TechPharma",
+  suggestion_id: "TECH-Q-02"
+})
+
+// 4. Workflow regenerated with all approved customs
+// 5. Workflow locked and versioned (v1)
+// 6. Exported to PNG
+
+// 7. Later, user promotes valuable task
+promote_custom_task({
+  client_name: "TechPharma",
+  custom_task_id: "DISP-CUSTOM-001",
+  new_base_id: "DISP-056",
+  rationale: "Nitrogen purging is common for HPAPI clients, should be in base library"
+})
+// Now DISP-056 available for all future clients with Q-HSE-01='HPAPI'
+```
+
+---
+
+# Combined Implementation Timeline
+
+## Phase 1: Granulation Foundation (v3.0) - Week 1-2
 
 ### Pre-Implementation
 - [ ] Get loop pairs from user (GRAN-L-xxx mappings)
@@ -357,7 +751,7 @@ version: '3.0.0'
 - [ ] Confirm standalone workflow approach
 - [ ] Create backups of data/tasks.json and data/decisions.json
 
-### Implementation Order
+### Implementation
 1. [ ] **Backup:** Copy tasks.json → tasks.json.backup
 2. [ ] **Backup:** Copy decisions.json → decisions.json.backup
 3. [ ] **Data:** Transform and append 56 Granulation tasks to tasks.json
@@ -380,7 +774,58 @@ version: '3.0.0'
 
 ---
 
-## Open Questions (AWAITING USER INPUT)
+## Phase 2: LLM Foundation (v3.1) - Week 3
+
+### Implementation
+1. [ ] Create `client_custom.json` schema and storage
+2. [ ] Update `client_workflows.json` to support versioning
+3. [ ] Implement `add_custom_task` tool (manual mode)
+4. [ ] Implement `add_custom_decision` tool (manual mode)
+5. [ ] Implement `list_custom_tasks` tool
+6. [ ] Test adding custom tasks manually for TechPharma
+7. [ ] Update version to 3.1.0
+
+---
+
+## Phase 3: LLM Integration (v3.2) - Week 4
+
+### Implementation
+1. [ ] Implement `analyze_client_context` tool
+2. [ ] Add LLM prompt engineering for workflow analysis
+3. [ ] Implement classification logic (minor vs major)
+4. [ ] Add approval workflow (show diff, confirm major changes)
+5. [ ] Test LLM suggestions with sample clients
+6. [ ] Update version to 3.2.0
+
+---
+
+## Phase 4: Augmented Generation (v3.3) - Week 5
+
+### Implementation
+1. [ ] Extend `generate_workflow` to support `mode: 'augmented'`
+2. [ ] Integrate LLM suggestions into workflow generation
+3. [ ] Add metadata tracking (what was added by LLM, what was approved)
+4. [ ] Implement workflow locking and versioning
+5. [ ] Test full augmented workflow generation
+6. [ ] Update version to 3.3.0
+
+---
+
+## Phase 5: Promotion & Maintenance (v3.4) - Week 6
+
+### Implementation
+1. [ ] Implement `promote_custom_task` tool
+2. [ ] Create workflow diff viewer (base vs augmented)
+3. [ ] Add promotion candidate detection
+4. [ ] Test promotion workflow
+5. [ ] Documentation and user guides
+6. [ ] Update version to 3.4.0
+
+---
+
+# Open Questions (AWAITING USER INPUT)
+
+## Granulation-Specific
 
 ### 1. Loop Pairs
 **Question:** What are the Loop-Start and Loop-End task ID pairs for Granulation?
@@ -407,35 +852,55 @@ Are there 2 additional stages, or are some macro names mapped to the same stage?
 
 ---
 
-## Files to Modify
+# Files to Modify
 
-| File | Changes | Lines Affected | Risk Level |
-|------|---------|----------------|------------|
-| `data/tasks.json` | Append 56 tasks | End of file | Low (append only) |
-| `data/decisions.json` | Append 34 decisions | End of file | Low (append only) |
-| `src/index.ts` | Multiple updates | ~7 locations | Medium |
+| File | Changes | Version | Risk Level |
+|------|---------|---------|------------|
+| `data/tasks.json` | Append 56 Granulation tasks | v3.0 | Low (append only) |
+| `data/decisions.json` | Append 34 Granulation decisions | v3.0 | Low (append only) |
+| `data/client_custom.json` | NEW - Custom tasks/decisions storage | v3.1 | Low (new file) |
+| `src/index.ts` | Multiple updates across all phases | v3.0-3.4 | Medium-High |
 
-**Estimated Total Changes:** ~500-700 new lines of code
+**Estimated Total Changes:** ~1500-2000 new lines of code across all phases
 
 ---
 
-## Rollback Plan
+# Rollback Plan
 
-If issues arise:
+If issues arise at any phase:
 1. Restore `data/tasks.json.backup`
 2. Restore `data/decisions.json.backup`
 3. Revert `src/index.ts` commits via git
+4. Remove `data/client_custom.json` if created
 
 ---
 
-## Status
+# Success Criteria
+
+## v3.0 (Granulation)
+- ✅ Granulation workflows generate correctly
+- ✅ Beautiful diagram with tri-path routing
+- ✅ No regression in Dispensing workflows
+- ✅ All validation checks pass
+
+## v3.1+ (LLM Augmentation)
+- ✅ Custom tasks can be added manually
+- ✅ LLM suggestions are classified correctly (minor vs major)
+- ✅ Augmented workflows maintain audit trail
+- ✅ Promotion pathway works end-to-end
+- ✅ Workflows are properly versioned and locked
+
+---
+
+# Status
 
 **Current Phase:** Planning
 **Blockers:**
-- Loop pairs needed
-- Stage count clarification needed
+- Loop pairs needed (Granulation)
+- Stage count clarification needed (Granulation)
 
-**Ready to Implement:** ❌ (awaiting user input)
+**Ready to Implement v3.0:** ❌ (awaiting user input)
+**Ready to Implement v3.1+:** ✅ (design approved, can start after v3.0)
 
 ---
 
