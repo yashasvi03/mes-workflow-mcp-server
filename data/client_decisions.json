@@ -282,5 +282,22 @@
       "rationale": "Partial cleaning between batches; Full cleaning at campaign end (policy-timed)",
       "timestamp": "2025-10-14T16:31:19.588Z"
     }
+  },
+  "New Pharma": {
+    "Q-ERP-01": {
+      "selected_outcome": "SAP",
+      "rationale": "",
+      "timestamp": "2025-10-15T17:09:05.007Z"
+    },
+    "Q-INV-02": {
+      "selected_outcome": "Custom (per class)",
+      "rationale": "FEFO for APIs and excipients with expiry dates, FIFO for packaging materials",
+      "timestamp": "2025-10-15T17:09:43.967Z"
+    },
+    "Q-INV-03": {
+      "selected_outcome": "Released only",
+      "rationale": "",
+      "timestamp": "2025-10-15T17:16:09.753Z"
+    }
   }
 }
