@@ -1,6 +1,6 @@
 # MES Workflow Builder
 
-A **Model Context Protocol (MCP) server** for designing, configuring, and visualizing pharmaceutical manufacturing dispensing workflows. This tool enables pharmaceutical manufacturers to configure custom Manufacturing Execution System (MES) workflows based on their facility's specific practices, equipment, and regulatory requirements.
+A **Model Context Protocol (MCP) server** for designing, configuring, and visualizing pharmaceutical manufacturing workflows including **Dispensing** and **Granulation** stages. This tool enables pharmaceutical manufacturers to configure custom Manufacturing Execution System (MES) workflows based on their facility's specific practices, equipment, and regulatory requirements.
 
 ---
 
@@ -24,18 +24,18 @@ A **Model Context Protocol (MCP) server** for designing, configuring, and visual
 
 ## 🎯 Overview
 
-The **MES Workflow Builder** is an intelligent system that helps pharmaceutical manufacturers design customized dispensing workflows. Instead of rigid, one-size-fits-all processes, this tool adapts to each client's unique requirements through a **decision-driven configuration approach**.
+The **MES Workflow Builder** is an intelligent system that helps pharmaceutical manufacturers design customized workflows for **Dispensing** and **Granulation** operations. Instead of rigid, one-size-fits-all processes, this tool adapts to each client's unique requirements through a **decision-driven configuration approach**.
 
 ### Why This Matters
 
-Pharmaceutical dispensing operations vary significantly across facilities due to:
+Pharmaceutical manufacturing operations vary significantly across facilities due to:
 - Different ERP systems (SAP vs. MES-driven allocation)
-- Equipment capabilities (connected vs. manual balances)
-- Material types (APIs requiring potency adjustment vs. sealed excipients)
-- Quality procedures (second-person verification policies)
+- Equipment capabilities (connected vs. manual balances, wet vs. dry granulation)
+- Material types (APIs requiring potency adjustment, sealed excipients, binders)
+- Quality procedures (second-person verification policies, IPC testing frequency)
 - Regulatory requirements (21 CFR Part 11, EU Annex 11)
 
-This tool captures these variations through **28 Practice decisions** and generates validated, client-specific workflows.
+This tool captures these variations through **62 Practice decisions** and generates validated, client-specific workflows spanning 11 manufacturing stages.
 
 ---
 
@@ -43,13 +43,14 @@ This tool captures these variations through **28 Practice decisions** and genera
 
 ### 🔧 Core Capabilities
 
-- **Decision-Driven Configuration**: Answer 28 practice questions to define your workflow
-- **Multi-Path Dispensing**: Support for weighing, sealed containers, or both
+- **Decision-Driven Configuration**: Answer 62 practice questions across Dispensing and Granulation stages
+- **Multi-Stage Support**: 11 stages spanning material allocation through batch closeout
+- **Multi-Path Processing**: Support for weighing/sealed dispensing, wet/dry/melt granulation methods
 - **Beautiful Visualizations**: Professional Mermaid diagrams with color-coded elements
 - **Version Control**: Track workflow iterations during client discussions
 - **Export to PNG**: Generate client-ready deliverables
 - **Validation Engine**: Detect disconnected nodes and structural issues
-- **Exception Handling**: Runtime conditions for spills, deviations, network failures
+- **Exception Handling**: Runtime conditions for spills, deviations, equipment failures, QA holds
 
 ### 🎨 Visual Design
 
@@ -60,14 +61,16 @@ This tool captures these variations through **28 Practice decisions** and genera
 - 🟠 **Orange diamonds** for decision points
 - 🟢 **Green nodes** for convergence/completion
 
-### 🆕 What's New in v2.3.0
+### 🆕 What's New in v3.0.0
 
-- ✨ **Refined visual layout** with cleaner node organization and improved readability
-- 🎨 **Enhanced decision points** with better styling and placement
-- 🔄 **Improved dual-path workflows** with clearer convergence visualization
-- 📦 **Local PNG export** using @mermaid-js/mermaid-cli for high-quality deliverables
-- 🎯 **Professional exports** at 2400x3000px resolution
-- ⚡ **Performance optimizations** for faster diagram generation
+- 🎯 **Granulation Stage Support**: 56 new tasks and 34 decisions for granulation workflows
+- 📊 **11 Total Stages**: Dispensing (5 stages) + Granulation (6 stages)
+- 🔀 **Tri-Path Granulation**: Wet, dry, and melt granulation method routing
+- 🔁 **Container Verification Loop**: Loop detection for material transfer verification
+- 📈 **123 Total Tasks**: Comprehensive task library covering end-to-end pharmaceutical manufacturing
+- 🎛️ **77 Decision Points**: Complete decision framework for both stages
+- ⚙️ **SCADA/PLC Integration**: Support for automated process control and data capture
+- 🧪 **LIMS Integration**: IPC result linkage and QA release workflows
 
 ---
 
@@ -202,12 +205,13 @@ export_workflow({
 ### Typical Workflow
 
 1. **Discovery Phase**
-   - Review client's current dispensing procedures
-   - Identify ERP/WMS/LIMS integrations
-   - Understand material handling requirements
+   - Review client's current manufacturing procedures (Dispensing and/or Granulation)
+   - Identify ERP/WMS/LIMS/SCADA integrations
+   - Understand material handling and equipment requirements
+   - Determine granulation method (wet/dry/melt) if applicable
 
 2. **Configuration Phase**
-   - Answer all 28 Practice decisions
+   - Answer relevant Practice decisions (62 total across both stages)
    - Use `get_unanswered_decisions` to track progress
    - Document rationale for each choice
 
@@ -248,8 +252,8 @@ mes-workflow-builder/
 ├── src/
 │   └── index.ts                 # Main MCP server implementation
 ├── data/
-│   ├── decisions.json           # 28 Practice + Runtime decisions
-│   ├── tasks.json               # 65 workflow tasks
+│   ├── decisions.json           # 77 decisions (62 Practice + 15 Runtime)
+│   ├── tasks.json               # 123 workflow tasks (Dispensing + Granulation)
 │   ├── client_decisions.json    # Client configurations
 │   └── client_workflows.json    # Generated workflow cache
 ├── exports/
@@ -266,9 +270,32 @@ mes-workflow-builder/
 
 ---
 
+## 🏭 Workflow Stages
+
+The MES Workflow Builder supports **11 manufacturing stages** across two major process families:
+
+### Dispensing Stages (5)
+
+1. **Pre-Dispensing** - Equipment readiness, cleaning verification, environmental checks
+2. **Material Allocation** - Lot selection, WMS staging, container verification
+3. **Weighing & Dispensing** - Material weighing, potency adjustment, dual-path (sealed/weighed) routing
+4. **Labeling & Documentation** - Container labeling, batch record generation
+5. **Post-Dispensing** - ERP consumption posting, remnant handling
+
+### Granulation Stages (6)
+
+6. **Pre-Granulation** - Room clearance, equipment readiness, calibration verification
+7. **Material Transfer & Verification** - Container-by-container material verification loop
+8. **Binder Preparation** - Binder solution prep, concentration/pH QC
+9. **Granulation** - Tri-path routing (wet/dry/melt methods), process control, endpoint verification
+10. **Post-Granulation** - Discharge to IBC, retain sampling, QA release decision, yield reconciliation
+11. **Closeout** - ERP batch posting, eBMR generation, QA approval, archival
+
+---
+
 ## 🧩 Decision Framework
 
-### Practice Decisions (28)
+### Practice Decisions (62 Total)
 
 Configuration-time choices that filter which tasks appear in the workflow:
 
@@ -310,10 +337,47 @@ Configuration-time choices that filter which tasks appear in the workflow:
 - Q-CONS-01: ERP consumption timing
 - Q-INV-06: Remnant return policy
 
-### Runtime Conditions (13)
+#### **Granulation - Pre-Granulation (4 decisions)**
+- GRAN-D-METHOD-001: **Granulation method (Wet | Dry | Melt)** - Primary routing decision
+- GRAN-D-CLN-001: Cleaning verification policy
+- GRAN-D-CAL-001: Instrument calibration frequency
+- GRAN-D-ENV-001: Environmental monitoring method
+
+#### **Granulation - Material Transfer (2 decisions)**
+- GRAN-D-MAT-001: Material verification method at staging
+- GRAN-D-CONT-001: Container integrity check requirement
+
+#### **Granulation - Binder Preparation (2 decisions)**
+- GRAN-D-BINDER-001: Binder solution preparation location
+- GRAN-D-BINDER-QC-001: Binder QC testing before use
+
+#### **Granulation - Granulation Process (7 decisions)**
+- GRAN-D-RECIPE-001: Recipe/setpoint source
+- GRAN-D-SCADA-001: SCADA/PLC integration availability
+- GRAN-D-WET-PARAM-001: Wet granulation binder addition mode
+- GRAN-D-CAPTURE-001: Data capture mode for process parameters
+- GRAN-D-IPC-001: In-process QC testing policy
+- GRAN-D-LIMS-001: LIMS integration for IPC results
+- GRAN-D-CALC-001: Auto-calculations for reconciliation
+
+#### **Granulation - Post-Granulation (6 decisions)**
+- GRAN-D-LABEL-001: Labeling requirements for granule containers
+- GRAN-D-RETAIN-001: Retain sample collection policy
+- GRAN-D-TRANSFER-001: Transfer destination for granules
+- GRAN-D-YIELD-001: Yield variance investigation threshold
+- GRAN-D-CLEAN-POLICY-001: Cleaning frequency for equipment
+- GRAN-D-DEVIATION-001: Deviation documentation system
+
+#### **Granulation - Closeout (3 decisions)**
+- GRAN-D-ERP-POST-001: ERP posting timing
+- GRAN-D-EBMR-001: eBMR generation and signature policy
+- GRAN-D-ARCHIVE-001: Records archival and retention policy
+
+### Runtime Conditions (15 Total)
 
 Exception paths that appear as decision diamonds in the workflow:
 
+#### **Dispensing Runtime Conditions (13)**
 - C-CLN-01: Cleaning hold-time validity
 - C-CAL-01: Balance calibration validity
 - C-ENV-01: Environmental limits
@@ -330,73 +394,17 @@ Exception paths that appear as decision diamonds in the workflow:
 - C-LBL-01: Label verification
 - C-SEC-01: Container sealed check (for "Both" path)
 
----
-
-## 🔄 Workflow Stages
-
-### 1. Pre-Dispensing & Room Readiness
-**Tasks:** 9 | **Decisions:** 6 Practice + 3 Runtime
-
-Activities:
-- Training verification
-- Line clearance
-- Cleaning validation
-- Environmental monitoring
-- Equipment calibration
-- QA inspection
-
-### 2. Material Allocation & Staging
-**Tasks:** 9 | **Decisions:** 4 Practice + 3 Runtime
-
-Activities:
-- Order/BOM retrieval
-- Material master sync
-- Lot filtering
-- Batch determination (SAP or MES)
-- Reservation & staging
-- Container identification
-
-### 3. Weighing & Dispensing
-**Tasks:** 35 | **Decisions:** 12 Practice + 7 Runtime
-
-**Two possible paths:**
-
-**Path A: Weighing Path**
-- Container selection loop
-- Balance suitability check
-- Potency adjustment
-- Weighing operation
-- Tolerance verification
-- Spill handling
-- Container labeling
-
-**Path B: Sealed Container Path**
-- Scan sealed container
-- Capture declared mass
-- Integrity verification
-- Dispense labeling
-
-**Paths converge** before labeling stage.
-
-### 4. Labeling & Documentation
-**Tasks:** 5 | **Decisions:** 4 Practice + 1 Runtime
-
-Activities:
-- Label preview & validation
-- Aggregate/kit labeling
-- Scanback verification
-- Label reconciliation
-
-### 5. Post-Dispensing
-**Tasks:** 7 | **Decisions:** 2 Practice + 1 Runtime
-
-Activities:
-- Storage assignment
-- Chain-of-custody transfer
-- ERP goods issue posting
-- Variance reconciliation
-- Deviation closure
-- Record archival
+#### **Granulation Runtime Conditions (8)**
+- GRAN-C-CLN-VALID-001: Cleaning verification validity
+- GRAN-C-CAL-VALID-001: Instrument calibration validity
+- GRAN-C-ENV-VALID-001: Environmental conditions within range
+- GRAN-D-WET-SET-001: Wet granulation setpoints validation
+- GRAN-D-DRY-SET-001: Dry granulation parameters validation
+- GRAN-D-ENDPOINT-001: Granulation endpoint reached
+- GRAN-D-OOL-001: IPC results within spec limits
+- GRAN-D-FAIL-001: Equipment failure recovery decision
+- GRAN-D-RELEASE-001: QA release decision for granules
+- GRAN-D-QA-APPROVAL-001: Final batch approval
 
 ---
 
@@ -408,14 +416,21 @@ Activities:
 Get all decision questions for a stage.
 
 **Parameters:**
-- `stage` (optional): "Pre-Dispensing" | "Material Allocation" | "Weighing & Dispensing" | "Labeling & Documentation" | "Post-Dispensing" | "All"
+- `stage` (optional): Dispensing: "Pre-Dispensing" | "Material Allocation" | "Weighing & Dispensing" | "Labeling & Documentation" | "Post-Dispensing"; Granulation: "Pre-Granulation" | "Material Transfer & Verification" | "Binder Preparation" | "Granulation" | "Post-Granulation" | "Closeout" | "All"
 - `category` (optional): "Practice" | "Runtime"
 
 **Example:**
 ```typescript
-get_decisions({ 
-  stage: "Weighing & Dispensing", 
-  category: "Practice" 
+// Get Dispensing decisions
+get_decisions({
+  stage: "Weighing & Dispensing",
+  category: "Practice"
+})
+
+// Get Granulation decisions
+get_decisions({
+  stage: "Granulation",
+  category: "Practice"
 })
 ```
 
@@ -423,11 +438,15 @@ get_decisions({
 Get detailed information about a specific decision.
 
 **Parameters:**
-- `decision_id` (required): e.g., "Q-ERP-01"
+- `decision_id` (required): e.g., "Q-ERP-01" (Dispensing) or "GRAN-D-METHOD-001" (Granulation)
 
 **Example:**
 ```typescript
+// Dispensing decision
 get_decision_details({ decision_id: "Q-SEC-01" })
+
+// Granulation decision
+get_decision_details({ decision_id: "GRAN-D-METHOD-001" })
 ```
 
 #### `save_client_decision`

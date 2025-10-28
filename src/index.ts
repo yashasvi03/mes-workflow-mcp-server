@@ -783,7 +783,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         properties: {
           decision_id: {
             type: 'string',
-            description: 'The decision ID (e.g., Q-ERP-01, Q-SEC-01)',
+            description: 'The decision ID (e.g., Q-ERP-01, Q-SEC-01 for Dispensing; GRAN-D-METHOD-001, GRAN-D-ENDPOINT-001 for Granulation)',
           },
         },
         required: ['decision_id'],
@@ -1309,7 +1309,8 @@ ${Object.entries(decisions)
   .map(([id, data]) => `- ${id} = "${data.selected_outcome}"`)
   .join('\n')}${Object.keys(decisions).length > 10 ? `\n... and ${Object.keys(decisions).length - 10} more` : ''}
 
-**Improvements in v2.2:**
+**Features in v3.0:**
+✅ Support for Dispensing and Granulation stages (11 total stages)
 ✅ Beautiful enhanced UI with emojis and professional colors
 ✅ Clear START 🏁 and COMPLETE 🎉 nodes
 ✅ Visual hierarchy with blue macros and purple loops
