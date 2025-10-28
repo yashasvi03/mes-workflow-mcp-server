@@ -1,0 +1,238 @@
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e1f5ff','primaryTextColor':'#01579b','primaryBorderColor':'#0288d1','lineColor':'#546e7a','secondaryColor':'#fff9e1','tertiaryColor':'#f3e5f5'}}}%%
+graph TB
+  classDef macroStyle fill:#0288d1,stroke:#01579b,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:16px
+  classDef microStyle fill:#fff9e1,stroke:#f9a825,stroke-width:2px,color:#3e2723,font-size:14px
+  classDef loopStyle fill:#8e24aa,stroke:#4a148c,stroke-width:3px,color:#ffffff,font-weight:bold,font-size:14px
+  classDef exceptionStyle fill:#ffcdd2,stroke:#c62828,stroke-width:3px,stroke-dasharray:8 4,color:#b71c1c,font-weight:bold
+  classDef decisionStyle fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#e65100,font-weight:bold
+  classDef convergeStyle fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#1b5e20,font-weight:bold
+
+  START([🏁 START GRANULATION])
+  style START fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px
+
+  M1["🔬 PRE-GRANULATION<br/>EQUIPMENT READINESS"]
+  class M1 macroStyle
+  START --> M1
+
+  T101["📋 Retrieve Batch Order<br/>& Master Recipe"]
+  T102["🧹 Request Line<br/>Clearance"]
+  class T101,T102 microStyle
+  M1 --> T101
+  T101 --> T102
+
+  D103{"✓ Cleaning<br/>Valid?"}
+  T103A["✅ Cleaning<br/>Verification OK"]
+  T103B["⚠️ RE-CLEAN<br/>Equipment"]
+  class D103 decisionStyle
+  class T103A microStyle
+  class T103B exceptionStyle
+  T102 --> D103
+  D103 -->|YES| T103A
+  D103 -.->|NO| T103B
+  T103B -.-> T103A
+
+  D104{"⚖️ Instruments<br/>Calibrated?"}
+  T104A["✅ Calibration<br/>Valid"]
+  T104B["⚠️ CALIBRATE<br/>or Block"]
+  class D104 decisionStyle
+  class T104A microStyle
+  class T104B exceptionStyle
+  T103A --> D104
+  D104 -->|YES| T104A
+  D104 -.->|NO| T104B
+  T104B -.-> T104A
+
+  T105["🌡️ Monitor Environment<br/>T/RH - Automated"]
+  class T105 microStyle
+  T104A --> T105
+
+  D106{"🌡️ Environment<br/>Within Range?"}
+  T106A["✅ Environment<br/>Acceptable"]
+  T106B["⚠️ PAUSE<br/>Deviation"]
+  class D106 decisionStyle
+  class T106A microStyle
+  class T106B exceptionStyle
+  T105 --> D106
+  D106 -->|YES| T106A
+  D106 -.->|NO| T106B
+  T106B -.-> T106A
+
+  T107["✅ Equipment<br/>Ready Sign-Off"]
+  class T107 convergeStyle
+  T106A --> T107
+
+  M2["📦 MATERIAL TRANSFER<br/>& VERIFICATION"]
+  class M2 macroStyle
+  T107 ==> M2
+
+  T201["📥 Receive Dispensed<br/>Materials"]
+  T202["📱 Barcode Scan<br/>Mandatory Verification"]
+  T203["🔍 Container Integrity<br/>Visual + Seal Check"]
+  T204["✅ Material<br/>Verification Complete"]
+  class T201,T202,T203,T204 microStyle
+  M2 --> T201
+  T201 --> T202
+  T202 --> T203
+  T203 --> T204
+
+  M3["💧 BINDER SOLUTION<br/>PREPARATION"]
+  class M3 macroStyle
+  T204 ==> M3
+
+  T301["⚗️ Pre-Made Batch<br/>in Separate Vessel"]
+  T302["🧪 QC Testing<br/>Concentration + pH"]
+  T303["✅ Binder Solution<br/>Approved"]
+  class T301,T302,T303 microStyle
+  M3 --> T301
+  T301 --> T302
+  T302 --> T303
+
+  M4["🔄 GRANULATION<br/>PROCESS"]
+  class M4 macroStyle
+  T303 ==> M4
+
+  T401["📋 Load MES Master<br/>Recipe & Setpoints"]
+  T402["🎛️ Configure SCADA<br/>Automated Setpoints"]
+  class T401,T402 microStyle
+  M4 --> T401
+  T401 --> T402
+
+  D403{"⚙️ Wet Granulation<br/>Setpoints OK?"}
+  T403A["✅ Setpoints<br/>Within Range"]
+  T403B["⚠️ ADJUST<br/>or Block"]
+  class D403 decisionStyle
+  class T403A microStyle
+  class T403B exceptionStyle
+  T402 --> D403
+  D403 -->|YES| T403A
+  D403 -.->|NO| T403B
+  T403B -.-> T403A
+
+  T404["💧 Continuous Spray<br/>Binder Addition"]
+  T405["🔄 Automated Data<br/>Capture - SCADA"]
+  T406["📊 Monitor Process<br/>Parameters"]
+  class T404,T405,T406 microStyle
+  T403A --> T404
+  T404 --> T405
+  T405 --> T406
+
+  D407{"🎯 Endpoint<br/>Reached?"}
+  class D407 decisionStyle
+  T406 --> D407
+  D407 -.->|NO - Continue| T406
+  D407 -->|YES| T408
+
+  T408["🛑 Stop Granulation<br/>Process"]
+  class T408 microStyle
+
+  D409{"🔧 Equipment<br/>Failure?"}
+  T409A["✅ Process<br/>Complete"]
+  T409B["⚠️ TERMINATE<br/>Batch"]
+  class D409 decisionStyle
+  class T409A microStyle
+  class T409B exceptionStyle
+  T408 --> D409
+  D409 -->|NO| T409A
+  D409 -.->|YES - Cannot Recover| T409B
+
+  T410["🧪 IPC Testing<br/>Moisture/PSD/Bulk Density"]
+  T411["📤 Auto-Import from LIMS"]
+  class T410,T411 microStyle
+  T409A --> T410
+  T410 --> T411
+
+  D412{"📊 IPC Results<br/>Within Spec?"}
+  T412A["✅ IPC<br/>Acceptable"]
+  T412B["⚠️ DEVIATION<br/>Workflow - MES Integrated"]
+  class D412 decisionStyle
+  class T412A microStyle
+  class T412B exceptionStyle
+  T411 --> D412
+  D412 -->|YES| T412A
+  D412 -.->|NO| T412B
+  T412B -.-> T412A
+
+  T413["🧮 Auto-Calculate<br/>Binder % & Yield"]
+  class T413 microStyle
+  T412A --> T413
+
+  M5["📤 POST-GRANULATION<br/>HANDLING"]
+  class M5 macroStyle
+  T413 ==> M5
+
+  T501["🏷️ Print GS1-128<br/>Barcode + Manual Fields"]
+  T502["✅ Label<br/>Verification"]
+  T503["🧪 Collect Retain Sample<br/>with Chain-of-Custody"]
+  T504["📍 Transfer to<br/>Intermediate Hold Area"]
+  class T501,T502,T503,T504 microStyle
+  M5 --> T501
+  T501 --> T502
+  T502 --> T503
+  T503 --> T504
+
+  D505{"👨‍🔬 QA Release<br/>Decision?"}
+  T505A["✅ Released"]
+  T505B["⛔ Hold"]
+  T505C["🔄 Conditional<br/>Rework"]
+  class D505 decisionStyle
+  class T505A convergeStyle
+  class T505B exceptionStyle
+  class T505C exceptionStyle
+  T504 --> D505
+  D505 -->|APPROVED| T505A
+  D505 -.->|REJECTED| T505B
+  D505 -.->|CONDITIONAL| T505C
+
+  T506["📊 Yield Variance<br/>Check ±5%"]
+  class T506 microStyle
+  T505A --> T506
+
+  D507{"📉 Variance<br/>Within Threshold?"}
+  T507A["✅ Yield<br/>Acceptable"]
+  T507B["⚠️ INVESTIGATION<br/>Triggered"]
+  class D507 decisionStyle
+  class T507A microStyle
+  class T507B exceptionStyle
+  T506 --> D507
+  D507 -->|YES - Within ±5%| T507A
+  D507 -.->|NO - Exceeds ±5%| T507B
+  T507B -.-> T507A
+
+  T508["🧹 Initiate Cleaning<br/>After Each Batch"]
+  class T508 microStyle
+  T507A --> T508
+
+  M6["📋 BATCH RECORD<br/>CLOSEOUT"]
+  class M6 macroStyle
+  T508 ==> M6
+
+  T601["📝 Generate Full<br/>Electronic eBMR"]
+  T602["✍️ 21 CFR Part 11<br/>Electronic Signatures"]
+  T603["📊 ERP Posting<br/>On QA Approval"]
+  class T601,T602,T603 microStyle
+  M6 --> T601
+  T601 --> T602
+  T602 --> T603
+
+  D604{"👨‍🔬 QA Batch<br/>Review?"}
+  T604A["✅ Batch<br/>Approved"]
+  T604B["⛔ Batch<br/>Rejected"]
+  T604C["⏸️ Pending<br/>Investigation"]
+  class D604 decisionStyle
+  class T604A convergeStyle
+  class T604B exceptionStyle
+  class T604C exceptionStyle
+  T603 --> D604
+  D604 -->|APPROVED| T604A
+  D604 -.->|REJECTED| T604B
+  D604 -.->|CONDITIONAL| T604C
+
+  T605["📁 Electronic Archive<br/>Validated System"]
+  T606["✅ Records Retention<br/>per Policy"]
+  class T605,T606 microStyle
+  T604A --> T605
+  T605 --> T606
+
+  COMPLETE([🎉 GRANULATION COMPLETE])
+  style COMPLETE fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px
+  T606 ==> COMPLETE
