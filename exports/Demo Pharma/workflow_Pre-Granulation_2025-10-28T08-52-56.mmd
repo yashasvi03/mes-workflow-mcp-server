@@ -1,0 +1,214 @@
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e1f5ff','primaryTextColor':'#01579b','primaryBorderColor':'#0288d1','lineColor':'#546e7a','secondaryColor':'#fff9e1','tertiaryColor':'#f3e5f5'}}}%%
+graph TB
+  classDef macroStyle fill:#0288d1,stroke:#01579b,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:16px
+  classDef microStyle fill:#fff9e1,stroke:#f9a825,stroke-width:2px,color:#3e2723,font-size:14px
+  classDef loopStyle fill:#8e24aa,stroke:#4a148c,stroke-width:3px,color:#ffffff,font-weight:bold,font-size:14px
+  classDef exceptionStyle fill:#ffcdd2,stroke:#c62828,stroke-width:3px,stroke-dasharray:8 4,color:#b71c1c,font-weight:bold
+  classDef decisionStyle fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#e65100,font-weight:bold
+  classDef convergeStyle fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#1b5e20,font-weight:bold
+  classDef dualPathStyle fill:#e1bee7,stroke:#6a1b9a,stroke-width:3px,color:#4a148c,font-weight:bold
+
+  START([🏁 START DISPENSING])
+  style START fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px
+
+  M1["📋 PRE-DISPENSING &<br/>ROOM READINESS"]
+  class M1 macroStyle
+  START --> M1
+
+  T001["👤 Training & Role Gate"]
+  T002["📝 Line Clearance Request"]
+  T003["🧹 Verify Batch Clearance<br/>& Remove Residuals"]
+  class T001,T002,T003 microStyle
+
+  M1 --> T001
+  T001 --> T002
+  T002 --> T003
+
+  D004{"⏰ Cleaning<br/>Hold-Time Valid?"}
+  T004["✓ Hold-Time Check"]
+  T005["⚠️ RE-CLEAN ROOM<br/>& Record"]
+  class D004 decisionStyle
+  class T004 microStyle
+  class T005 exceptionStyle
+
+  T003 --> D004
+  D004 -->|YES| T004
+  D004 -.->|NO - Expired| T005
+  T005 -.-> T004
+
+  T006["🌡️ Capture Environment<br/>RT/RH/DP"]
+  T008["⚖️ Balance Calibration<br/>Verification"]
+  class T006,T008 microStyle
+
+  T003 --> T006
+  T003 --> T008
+
+  T009["✅ QA Room Readiness<br/>Inspection & E-Sign"]
+  class T009 convergeStyle
+
+  T004 --> T009
+  T006 --> T009
+  T008 --> T009
+
+  M2["📦 MATERIAL IDENTIFICATION<br/>ALLOCATION & STAGING"]
+  class M2 macroStyle
+  T009 ==> M2
+
+  T010["📄 Retrieve Production<br/>Order & BOM"]
+  T011["🔄 Sync Material Master<br/>Data"]
+  T012["📊 Fetch Available<br/>Inventory Lots"]
+  T013["🔍 Filter by Status<br/>& Retest Validity"]
+  class T010,T011,T012,T013 microStyle
+
+  M2 --> T010
+  T010 --> T011
+  T011 --> T012
+  T012 --> T013
+
+  T014["🎯 SAP/ERP BATCH<br/>DETERMINATION"]
+  style T014 fill:#bbdefb,stroke:#1565c0,stroke-width:3px,color:#0d47a1,font-weight:bold
+  T013 --> T014
+
+  T016["📍 Reserve & Stage<br/>to Dispensing Area"]
+  T017["🔎 Identify Container<br/>& Verify Allocation"]
+  class T016,T017 microStyle
+  T014 --> T016
+  T016 --> T017
+
+  M3["⚖️ WEIGHING &<br/>DISPENSING"]
+  class M3 macroStyle
+  T017 ==> M3
+
+  ROUTE{"🔀 CONTAINER<br/>SEALED?<br/>(Material-Dependent)"}
+  class ROUTE dualPathStyle
+  M3 --> ROUTE
+
+  LOOP_W_START(("🔄 START<br/>WEIGHING<br/>LOOP"))
+  class LOOP_W_START loopStyle
+  ROUTE -->|NO - Weigh| LOOP_W_START
+
+  T020["📦 Select Next<br/>Container"]
+  class T020 microStyle
+  LOOP_W_START --> T020
+
+  D021{"🔍 Container<br/>Damaged?"}
+  T021["⛔ QUARANTINE<br/>& Replace"]
+  class D021 decisionStyle
+  class T021 exceptionStyle
+  T020 --> D021
+  D021 -.->|YES| T021
+  D021 -->|NO| T022
+
+  T022["⚖️ Balance Suitability<br/>Check"]
+  T023["📝 Select Weighing<br/>Method"]
+  T024["⚖️ Tare Container"]
+  T025["🧪 Pull Assay & CoA<br/>Compute Adjusted Qty"]
+  T026["🔢 Apply UoM Conversion<br/>& Rounding"]
+  class T022,T023,T024,T025,T026 microStyle
+
+  T022 --> T023
+  T023 --> T024
+  T024 --> T025
+  T025 --> T026
+
+  T027["⚖️ WEIGH MATERIAL"]
+  style T027 fill:#fff59d,stroke:#f57f17,stroke-width:3px,color:#f57f17,font-weight:bold,font-size:15px
+  T026 --> T027
+
+  D027S{"💧 Spill<br/>Detected?"}
+  T027S["⚠️ SPILL WORKFLOW<br/>Cleanup & Log"]
+  class D027S decisionStyle
+  class T027S exceptionStyle
+  T027 --> D027S
+  D027S -.->|YES| T027S
+  D027S -->|NO| T029
+
+  D029{"📏 Within<br/>Tolerance?"}
+  T029["⚠️ DEVIATION<br/>Handle per Policy"]
+  class D029 decisionStyle
+  class T029 exceptionStyle
+  D029 -.->|NO| T029
+  D029 -->|YES| T030W
+
+  T030W["🏷️ Print & Affix<br/>Container Label"]
+  T030VW["✓ Label Scanback<br/>Verification"]
+  class T030W,T030VW microStyle
+  T030W --> T030VW
+
+  T031W["➕ Update Running Total"]
+  class T031W microStyle
+  T030VW --> T031W
+
+  D031W{"🎯 Target<br/>Reached?"}
+  class D031W decisionStyle
+  T031W --> D031W
+
+  LOOP_W_END(("🔄 END<br/>WEIGHING<br/>LOOP"))
+  class LOOP_W_END loopStyle
+  D031W -.->|NO| T020
+  D031W -->|YES| LOOP_W_END
+
+  LOOP_S_START(("🔄 START<br/>SEALED<br/>LOOP"))
+  class LOOP_S_START loopStyle
+  ROUTE -->|YES - Sealed| LOOP_S_START
+
+  T_S_002["📦 Scan Sealed Container<br/>Capture Declared Mass"]
+  T_S_003["🔍 Verify Integrity<br/>& Eligibility"]
+  T_S_004["🏷️ Print Dispensed<br/>Container Label"]
+  T_S_005["➕ Update Running Total"]
+  class T_S_002,T_S_003,T_S_004,T_S_005 microStyle
+
+  LOOP_S_START --> T_S_002
+  T_S_002 --> T_S_003
+  T_S_003 --> T_S_004
+  T_S_004 --> T_S_005
+
+  D_S_005{"🎯 Target<br/>Reached?"}
+  class D_S_005 decisionStyle
+  T_S_005 --> D_S_005
+
+  LOOP_S_END(("🔄 END<br/>SEALED<br/>LOOP"))
+  class LOOP_S_END loopStyle
+  D_S_005 -.->|NO| T_S_002
+  D_S_005 -->|YES| LOOP_S_END
+
+  CONVERGE["🔗 PATHS CONVERGE"]
+  class CONVERGE convergeStyle
+  LOOP_W_END --> CONVERGE
+  LOOP_S_END --> CONVERGE
+
+  M5["🏷️ LABELING, RECONCILIATION<br/>& DOCUMENTATION"]
+  class M5 macroStyle
+  CONVERGE ==> M5
+
+  T040["👁️ Label Preview<br/>& Validation"]
+  T042["📋 Print Aggregate/<br/>Kit Label"]
+  T044["✅ Label Reconciliation<br/>(Printed vs Used vs Voided)"]
+  class T040,T042,T044 microStyle
+
+  M5 --> T040
+  T040 --> T042
+  T042 --> T044
+
+  M6["📤 POST-DISPENSING<br/>TRANSFER & ERP POSTING"]
+  class M6 macroStyle
+  T044 ==> M6
+
+  T050["📍 Assign Storage<br/>Location"]
+  T051["🤝 Handover Scan<br/>(Chain of Custody)"]
+  T052A["✓ ERP GI Posting<br/>Acknowledgement"]
+  T053["📊 Variance<br/>Reconciliation"]
+  T054["✅ Close Deviations<br/>& Attach Evidence"]
+  T055["📁 Archive Logs<br/>& Finalize Record"]
+  class T050,T051,T052A,T053,T054,T055 microStyle
+
+  M6 --> T050
+  T050 --> T051
+  T051 --> T052A
+  T052A --> T053
+  T053 --> T054
+  T054 --> T055
+
+  COMPLETE([🎉 DISPENSING COMPLETE])
+  style COMPLETE fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px
+  T055 ==> COMPLETE

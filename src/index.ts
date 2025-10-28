@@ -742,6 +742,394 @@ function generateBeautifulMermaidDiagram(
   return mermaid;
 }
 
+// Add this new function after generateBeautifulMermaidDiagram for Dispensing
+
+/**
+ * Generate beautiful Granulation workflow with enhanced UI
+ */
+function generateGranulationWorkflow(
+  filteredTasks: Task[],
+  allTasks: Task[],
+  decisions: { [key: string]: ClientDecision },
+  clientName: string
+): string {
+  let mermaid = `%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e1f5ff','primaryTextColor':'#01579b','primaryBorderColor':'#0288d1','lineColor':'#546e7a','secondaryColor':'#fff9e1','tertiaryColor':'#f3e5f5'}}}%%\n`;
+  mermaid += `graph TB\n`;
+  mermaid += `  classDef macroStyle fill:#0288d1,stroke:#01579b,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:16px\n`;
+  mermaid += `  classDef microStyle fill:#fff9e1,stroke:#f9a825,stroke-width:2px,color:#3e2723,font-size:14px\n`;
+  mermaid += `  classDef loopStyle fill:#8e24aa,stroke:#4a148c,stroke-width:3px,color:#ffffff,font-weight:bold,font-size:14px\n`;
+  mermaid += `  classDef exceptionStyle fill:#ffcdd2,stroke:#c62828,stroke-width:3px,stroke-dasharray:8 4,color:#b71c1c,font-weight:bold\n`;
+  mermaid += `  classDef decisionStyle fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#e65100,font-weight:bold\n`;
+  mermaid += `  classDef convergeStyle fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#1b5e20,font-weight:bold\n\n`;
+
+  // Get key decisions
+  const methodDecision = decisions['GRAN-D-METHOD-001']?.selected_outcome || 'Wet';
+  const cleaningDecision = decisions['GRAN-D-CLN-001']?.selected_outcome || 'Visual + swab';
+  const calibrationDecision = decisions['GRAN-D-CAL-001']?.selected_outcome || 'Before each batch';
+  const envDecision = decisions['GRAN-D-ENV-001']?.selected_outcome || 'Automated (HVAC historian)';
+  
+  // ========================================
+  // START NODE
+  // ========================================
+  mermaid += `  START([🏁 START GRANULATION])\n`;
+  mermaid += `  style START fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px\n\n`;
+
+  // ========================================
+  // STAGE 1: PRE-GRANULATION
+  // ========================================
+  mermaid += `  M1["🔬 PRE-GRANULATION<br/>EQUIPMENT READINESS"]\n`;
+  mermaid += `  class M1 macroStyle\n`;
+  mermaid += `  START --> M1\n\n`;
+
+  mermaid += `  T101["📋 Retrieve Batch Order<br/>& Master Recipe"]\n`;
+  mermaid += `  T102["🧹 Request Line<br/>Clearance"]\n`;
+  mermaid += `  class T101,T102 microStyle\n`;
+  mermaid += `  M1 --> T101\n`;
+  mermaid += `  T101 --> T102\n\n`;
+
+  // Cleaning verification
+  mermaid += `  D103{"✓ Cleaning<br/>Valid?"}\n`;
+  mermaid += `  T103A["✅ Cleaning<br/>Verification OK"]\n`;
+  mermaid += `  T103B["⚠️ RE-CLEAN<br/>Equipment"]\n`;
+  mermaid += `  class D103 decisionStyle\n`;
+  mermaid += `  class T103A microStyle\n`;
+  mermaid += `  class T103B exceptionStyle\n`;
+  mermaid += `  T102 --> D103\n`;
+  mermaid += `  D103 -->|YES| T103A\n`;
+  mermaid += `  D103 -.->|NO| T103B\n`;
+  mermaid += `  T103B -.-> T103A\n\n`;
+
+  // Calibration check
+  mermaid += `  D104{"⚖️ Instruments<br/>Calibrated?"}\n`;
+  mermaid += `  T104A["✅ Calibration<br/>Valid"]\n`;
+  mermaid += `  T104B["⚠️ CALIBRATE<br/>or Block"]\n`;
+  mermaid += `  class D104 decisionStyle\n`;
+  mermaid += `  class T104A microStyle\n`;
+  mermaid += `  class T104B exceptionStyle\n`;
+  mermaid += `  T103A --> D104\n`;
+  mermaid += `  D104 -->|YES| T104A\n`;
+  mermaid += `  D104 -.->|NO| T104B\n`;
+  mermaid += `  T104B -.-> T104A\n\n`;
+
+  // Environmental monitoring
+  const envLabel = envDecision.includes('Automated') ? '🌡️ Monitor Environment<br/>T/RH - Automated' : '🌡️ Monitor Environment<br/>T/RH - Manual Entry';
+  mermaid += `  T105["${envLabel}"]\n`;
+  mermaid += `  class T105 microStyle\n`;
+  mermaid += `  T104A --> T105\n\n`;
+
+  mermaid += `  D106{"🌡️ Environment<br/>Within Range?"}\n`;
+  mermaid += `  T106A["✅ Environment<br/>Acceptable"]\n`;
+  mermaid += `  T106B["⚠️ PAUSE<br/>Deviation"]\n`;
+  mermaid += `  class D106 decisionStyle\n`;
+  mermaid += `  class T106A microStyle\n`;
+  mermaid += `  class T106B exceptionStyle\n`;
+  mermaid += `  T105 --> D106\n`;
+  mermaid += `  D106 -->|YES| T106A\n`;
+  mermaid += `  D106 -.->|NO| T106B\n`;
+  mermaid += `  T106B -.-> T106A\n\n`;
+
+  mermaid += `  T107["✅ Equipment<br/>Ready Sign-Off"]\n`;
+  mermaid += `  class T107 convergeStyle\n`;
+  mermaid += `  T106A --> T107\n\n`;
+
+  // ========================================
+  // STAGE 2: MATERIAL TRANSFER & VERIFICATION
+  // ========================================
+  mermaid += `  M2["📦 MATERIAL TRANSFER<br/>& VERIFICATION"]\n`;
+  mermaid += `  class M2 macroStyle\n`;
+  mermaid += `  T107 ==> M2\n\n`;
+
+  const matVerification = decisions['GRAN-D-MAT-001']?.selected_outcome || 'Barcode scan mandatory';
+  const containerCheck = decisions['GRAN-D-CONT-001']?.selected_outcome || 'Yes (visual + seal)';
+
+  mermaid += `  T201["📥 Receive Dispensed<br/>Materials"]\n`;
+  mermaid += `  T202["📱 ${matVerification.includes('Barcode') ? 'Barcode Scan' : 'Manual ID'}<br/>Mandatory Verification"]\n`;
+  
+  if (containerCheck.startsWith('Yes')) {
+    const checkType = containerCheck.includes('seal') ? 'Visual + Seal Check' : 'Visual Only Check';
+    mermaid += `  T203["🔍 Container Integrity<br/>${checkType}"]\n`;
+  }
+  
+  mermaid += `  T204["✅ Material<br/>Verification Complete"]\n`;
+  mermaid += `  class T201,T202,T203,T204 microStyle\n`;
+  mermaid += `  M2 --> T201\n`;
+  mermaid += `  T201 --> T202\n`;
+  mermaid += `  T202 --> T203\n`;
+  mermaid += `  T203 --> T204\n\n`;
+
+  // ========================================
+  // STAGE 3: BINDER PREPARATION (if Wet granulation)
+  // ========================================
+  if (methodDecision === 'Wet') {
+    mermaid += `  M3["💧 BINDER SOLUTION<br/>PREPARATION"]\n`;
+    mermaid += `  class M3 macroStyle\n`;
+    mermaid += `  T204 ==> M3\n\n`;
+
+    const binderPrep = decisions['GRAN-D-BINDER-001']?.selected_outcome || 'Pre-made batch in separate vessel';
+    const binderQC = decisions['GRAN-D-BINDER-QC-001']?.selected_outcome || 'Concentration + pH';
+
+    const prepLabel = binderPrep.includes('In-line') ? 'In-line Preparation' : 'Pre-Made Batch<br/>in Separate Vessel';
+    mermaid += `  T301["⚗️ ${prepLabel}"]\n`;
+    
+    const qcLabel = binderQC.includes('Concentration') ? 'Concentration + pH' : binderQC.includes('Visual') ? 'Visual Only' : 'No QC';
+    mermaid += `  T302["🧪 QC Testing<br/>${qcLabel}"]\n`;
+    mermaid += `  T303["✅ Binder Solution<br/>Approved"]\n`;
+    mermaid += `  class T301,T302,T303 microStyle\n`;
+    mermaid += `  M3 --> T301\n`;
+    mermaid += `  T301 --> T302\n`;
+    mermaid += `  T302 --> T303\n\n`;
+  }
+
+  // ========================================
+  // STAGE 4: GRANULATION PROCESS
+  // ========================================
+  mermaid += `  M4["🔄 GRANULATION<br/>PROCESS"]\n`;
+  mermaid += `  class M4 macroStyle\n`;
+  mermaid += `  ${methodDecision === 'Wet' ? 'T303' : 'T204'} ==> M4\n\n`;
+
+  const recipeSource = decisions['GRAN-D-RECIPE-001']?.selected_outcome || 'MES master recipe';
+  const scadaIntegration = decisions['GRAN-D-SCADA-001']?.selected_outcome || 'Yes (automated setpoints)';
+  
+  mermaid += `  T401["📋 Load ${recipeSource.includes('MES') ? 'MES Master' : recipeSource.includes('ERP') ? 'ERP' : 'Manual'}<br/>Recipe & Setpoints"]\n`;
+  
+  if (scadaIntegration.includes('Yes')) {
+    mermaid += `  T402["🎛️ Configure SCADA<br/>Automated Setpoints"]\n`;
+  } else {
+    mermaid += `  T402["🎛️ Configure Process<br/>Manual Setpoints"]\n`;
+  }
+  
+  mermaid += `  class T401,T402 microStyle\n`;
+  mermaid += `  M4 --> T401\n`;
+  mermaid += `  T401 --> T402\n\n`;
+
+  // Setpoint validation
+  if (methodDecision === 'Wet') {
+    mermaid += `  D403{"⚙️ Wet Granulation<br/>Setpoints OK?"}\n`;
+  } else if (methodDecision === 'Dry') {
+    mermaid += `  D403{"⚙️ Dry Granulation<br/>Parameters OK?"}\n`;
+  } else {
+    mermaid += `  D403{"⚙️ Melt Granulation<br/>Setpoints OK?"}\n`;
+  }
+  
+  mermaid += `  T403A["✅ Setpoints<br/>Within Range"]\n`;
+  mermaid += `  T403B["⚠️ ADJUST<br/>or Block"]\n`;
+  mermaid += `  class D403 decisionStyle\n`;
+  mermaid += `  class T403A microStyle\n`;
+  mermaid += `  class T403B exceptionStyle\n`;
+  mermaid += `  T402 --> D403\n`;
+  mermaid += `  D403 -->|YES| T403A\n`;
+  mermaid += `  D403 -.->|NO| T403B\n`;
+  mermaid += `  T403B -.-> T403A\n\n`;
+
+  // Process execution
+  if (methodDecision === 'Wet') {
+    const binderMode = decisions['GRAN-D-WET-PARAM-001']?.selected_outcome || 'Continuous spray';
+    const modeLabel = binderMode.includes('Continuous') ? 'Continuous Spray' : binderMode.includes('Batch') ? 'Batch Addition' : 'Dual-Phase';
+    mermaid += `  T404["💧 ${modeLabel}<br/>Binder Addition"]\n`;
+  } else if (methodDecision === 'Dry') {
+    mermaid += `  T404["🔨 Roller Compaction<br/>Process"]\n`;
+  } else {
+    mermaid += `  T404["🌡️ Melt Process<br/>Execution"]\n`;
+  }
+  
+  const dataCapture = decisions['GRAN-D-CAPTURE-001']?.selected_outcome || 'Automated (SCADA historian)';
+  const captureLabel = dataCapture.includes('Automated') ? 'Automated Data<br/>Capture - SCADA' : 'Manual Entry<br/>with E-Sign';
+  
+  mermaid += `  T405["🔄 ${captureLabel}"]\n`;
+  mermaid += `  T406["📊 Monitor Process<br/>Parameters"]\n`;
+  mermaid += `  class T404,T405,T406 microStyle\n`;
+  mermaid += `  T403A --> T404\n`;
+  mermaid += `  T404 --> T405\n`;
+  mermaid += `  T405 --> T406\n\n`;
+
+  // Endpoint check
+  mermaid += `  D407{"🎯 Endpoint<br/>Reached?"}\n`;
+  mermaid += `  class D407 decisionStyle\n`;
+  mermaid += `  T406 --> D407\n`;
+  mermaid += `  D407 -.->|NO - Continue| T406\n`;
+  mermaid += `  D407 -->|YES| T408\n\n`;
+
+  mermaid += `  T408["🛑 Stop Granulation<br/>Process"]\n`;
+  mermaid += `  class T408 microStyle\n\n`;
+
+  // Equipment failure check
+  mermaid += `  D409{"🔧 Equipment<br/>Failure?"}\n`;
+  mermaid += `  T409A["✅ Process<br/>Complete"]\n`;
+  mermaid += `  T409B["⚠️ TERMINATE<br/>Batch"]\n`;
+  mermaid += `  class D409 decisionStyle\n`;
+  mermaid += `  class T409A microStyle\n`;
+  mermaid += `  class T409B exceptionStyle\n`;
+  mermaid += `  T408 --> D409\n`;
+  mermaid += `  D409 -->|NO| T409A\n`;
+  mermaid += `  D409 -.->|YES - Cannot Recover| T409B\n\n`;
+
+  // IPC Testing
+  const ipcPolicy = decisions['GRAN-D-IPC-001']?.selected_outcome || 'All batches';
+  const limsIntegration = decisions['GRAN-D-LIMS-001']?.selected_outcome || 'Manual entry with reference';
+  
+  mermaid += `  T410["🧪 IPC Testing<br/>Moisture/PSD/Bulk Density"]\n`;
+  
+  const limsLabel = limsIntegration.includes('Full') ? 'Auto-Import from LIMS' : 'Manual Entry<br/>with Reference to LIMS';
+  mermaid += `  T411["📤 ${limsLabel}"]\n`;
+  mermaid += `  class T410,T411 microStyle\n`;
+  mermaid += `  T409A --> T410\n`;
+  mermaid += `  T410 --> T411\n\n`;
+
+  // IPC results check
+  mermaid += `  D412{"📊 IPC Results<br/>Within Spec?"}\n`;
+  mermaid += `  T412A["✅ IPC<br/>Acceptable"]\n`;
+  
+  const deviationSystem = decisions['GRAN-D-DEVIATION-001']?.selected_outcome || 'MES-integrated deviation module';
+  const devLabel = deviationSystem.includes('MES') ? 'MES Integrated' : deviationSystem.includes('External') ? 'External QMS' : 'Both Systems';
+  mermaid += `  T412B["⚠️ DEVIATION<br/>Workflow - ${devLabel}"]\n`;
+  
+  mermaid += `  class D412 decisionStyle\n`;
+  mermaid += `  class T412A microStyle\n`;
+  mermaid += `  class T412B exceptionStyle\n`;
+  mermaid += `  T411 --> D412\n`;
+  mermaid += `  D412 -->|YES| T412A\n`;
+  mermaid += `  D412 -.->|NO| T412B\n`;
+  mermaid += `  T412B -.-> T412A\n\n`;
+
+  // Auto-calculations
+  const autoCalc = decisions['GRAN-D-CALC-001']?.selected_outcome || 'Enabled (binder %, yield)';
+  if (autoCalc.includes('Enabled')) {
+    mermaid += `  T413["🧮 Auto-Calculate<br/>Binder % & Yield"]\n`;
+    mermaid += `  class T413 microStyle\n`;
+    mermaid += `  T412A --> T413\n\n`;
+  }
+
+  // ========================================
+  // STAGE 5: POST-GRANULATION
+  // ========================================
+  mermaid += `  M5["📤 POST-GRANULATION<br/>HANDLING"]\n`;
+  mermaid += `  class M5 macroStyle\n`;
+  mermaid += `  ${autoCalc.includes('Enabled') ? 'T413' : 'T412A'} ==> M5\n\n`;
+
+  const labelingReq = decisions['GRAN-D-LABEL-001']?.selected_outcome || 'GS1-128 barcode + manual fields';
+  const retainPolicy = decisions['GRAN-D-RETAIN-001']?.selected_outcome || 'Mandatory with chain-of-custody';
+  const transferDest = decisions['GRAN-D-TRANSFER-001']?.selected_outcome || 'Intermediate hold area';
+  
+  const labelType = labelingReq.includes('GS1') ? 'GS1-128<br/>Barcode + Manual Fields' : labelingReq.includes('Standard') ? 'Standard Label<br/>+ E-Record' : 'Minimal<br/>Batch ID Only';
+  
+  mermaid += `  T501["🏷️ Print ${labelType}"]\n`;
+  mermaid += `  T502["✅ Label<br/>Verification"]\n`;
+  
+  if (retainPolicy.includes('Mandatory')) {
+    const retainLabel = retainPolicy.includes('chain') ? 'with Chain-of-Custody' : 'No Tracking';
+    mermaid += `  T503["🧪 Collect Retain Sample<br/>${retainLabel}"]\n`;
+  }
+  
+  const transferLabel = transferDest.includes('Direct') ? 'Direct to<br/>Next Stage' : transferDest.includes('Intermediate') ? 'Intermediate Hold Area' : 'Conditional<br/>QA Decision';
+  mermaid += `  T504["📍 Transfer to<br/>${transferLabel}"]\n`;
+  
+  mermaid += `  class T501,T502,T503,T504 microStyle\n`;
+  mermaid += `  M5 --> T501\n`;
+  mermaid += `  T501 --> T502\n`;
+  mermaid += `  T502 --> T503\n`;
+  mermaid += `  T503 --> T504\n\n`;
+
+  // QA Release decision
+  mermaid += `  D505{"👨‍🔬 QA Release<br/>Decision?"}\n`;
+  mermaid += `  T505A["✅ Released"]\n`;
+  mermaid += `  T505B["⛔ Hold"]\n`;
+  mermaid += `  T505C["🔄 Conditional<br/>Rework"]\n`;
+  mermaid += `  class D505 decisionStyle\n`;
+  mermaid += `  class T505A convergeStyle\n`;
+  mermaid += `  class T505B exceptionStyle\n`;
+  mermaid += `  class T505C exceptionStyle\n`;
+  mermaid += `  T504 --> D505\n`;
+  mermaid += `  D505 -->|APPROVED| T505A\n`;
+  mermaid += `  D505 -.->|REJECTED| T505B\n`;
+  mermaid += `  D505 -.->|CONDITIONAL| T505C\n\n`;
+
+  // Yield variance check
+  const yieldThreshold = decisions['GRAN-D-YIELD-001']?.selected_outcome || '±5%';
+  mermaid += `  T506["📊 Yield Variance<br/>Check ${yieldThreshold}"]\n`;
+  mermaid += `  class T506 microStyle\n`;
+  mermaid += `  T505A --> T506\n\n`;
+
+  mermaid += `  D507{"📉 Variance<br/>Within Threshold?"}\n`;
+  mermaid += `  T507A["✅ Yield<br/>Acceptable"]\n`;
+  mermaid += `  T507B["⚠️ INVESTIGATION<br/>Triggered"]\n`;
+  mermaid += `  class D507 decisionStyle\n`;
+  mermaid += `  class T507A microStyle\n`;
+  mermaid += `  class T507B exceptionStyle\n`;
+  mermaid += `  T506 --> D507\n`;
+  mermaid += `  D507 -->|YES - Within ${yieldThreshold}| T507A\n`;
+  mermaid += `  D507 -.->|NO - Exceeds ${yieldThreshold}| T507B\n`;
+  mermaid += `  T507B -.-> T507A\n\n`;
+
+  // Cleaning
+  const cleaningFreq = decisions['GRAN-D-CLEAN-POLICY-001']?.selected_outcome || 'After each batch';
+  const cleanLabel = cleaningFreq.includes('each batch') ? 'After Each Batch' : cleaningFreq.includes('campaign') ? 'After Campaign' : 'After Product Change';
+  
+  mermaid += `  T508["🧹 Initiate Cleaning<br/>${cleanLabel}"]\n`;
+  mermaid += `  class T508 microStyle\n`;
+  mermaid += `  T507A --> T508\n\n`;
+
+  // ========================================
+  // STAGE 6: CLOSEOUT
+  // ========================================
+  mermaid += `  M6["📋 BATCH RECORD<br/>CLOSEOUT"]\n`;
+  mermaid += `  class M6 macroStyle\n`;
+  mermaid += `  T508 ==> M6\n\n`;
+
+  const ebmrPolicy = decisions['GRAN-D-EBMR-001']?.selected_outcome || 'Full electronic (21 CFR Part 11)';
+  const erpPosting = decisions['GRAN-D-ERP-POST-001']?.selected_outcome || 'On QA approval';
+  
+  const ebmrLabel = ebmrPolicy.includes('Full electronic') ? 'Full<br/>Electronic eBMR' : ebmrPolicy.includes('Hybrid') ? 'Hybrid<br/>E-Record + Paper' : 'Paper<br/>Only';
+  
+  mermaid += `  T601["📝 Generate ${ebmrLabel}"]\n`;
+  
+  if (ebmrPolicy.includes('21 CFR Part 11')) {
+    mermaid += `  T602["✍️ 21 CFR Part 11<br/>Electronic Signatures"]\n`;
+  } else {
+    mermaid += `  T602["✍️ Sign Batch<br/>Record"]\n`;
+  }
+  
+  const postingLabel = erpPosting.includes('Real-time') ? 'Real-Time<br/>at Completion' : erpPosting.includes('Batch') ? 'Batch<br/>End of Shift' : 'On QA Approval';
+  mermaid += `  T603["📊 ERP Posting<br/>${postingLabel}"]\n`;
+  
+  mermaid += `  class T601,T602,T603 microStyle\n`;
+  mermaid += `  M6 --> T601\n`;
+  mermaid += `  T601 --> T602\n`;
+  mermaid += `  T602 --> T603\n\n`;
+
+  // QA Batch Review
+  mermaid += `  D604{"👨‍🔬 QA Batch<br/>Review?"}\n`;
+  mermaid += `  T604A["✅ Batch<br/>Approved"]\n`;
+  mermaid += `  T604B["⛔ Batch<br/>Rejected"]\n`;
+  mermaid += `  T604C["⏸️ Pending<br/>Investigation"]\n`;
+  mermaid += `  class D604 decisionStyle\n`;
+  mermaid += `  class T604A convergeStyle\n`;
+  mermaid += `  class T604B exceptionStyle\n`;
+  mermaid += `  class T604C exceptionStyle\n`;
+  mermaid += `  T603 --> D604\n`;
+  mermaid += `  D604 -->|APPROVED| T604A\n`;
+  mermaid += `  D604 -.->|REJECTED| T604B\n`;
+  mermaid += `  D604 -.->|CONDITIONAL| T604C\n\n`;
+
+  // Archive
+  const archivePolicy = decisions['GRAN-D-ARCHIVE-001']?.selected_outcome || 'Electronic archive (validated system)';
+  const archiveLabel = archivePolicy.includes('Electronic archive') ? 'Electronic Archive<br/>Validated System' : archivePolicy.includes('Paper + electronic') ? 'Paper + Electronic<br/>Archive' : 'Site-Specific<br/>Archive';
+  
+  mermaid += `  T605["📁 ${archiveLabel}"]\n`;
+  mermaid += `  T606["✅ Records Retention<br/>per Policy"]\n`;
+  mermaid += `  class T605,T606 microStyle\n`;
+  mermaid += `  T604A --> T605\n`;
+  mermaid += `  T605 --> T606\n\n`;
+
+  // ========================================
+  // END NODE
+  // ========================================
+  mermaid += `  COMPLETE([🎉 GRANULATION COMPLETE])\n`;
+  mermaid += `  style COMPLETE fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px\n`;
+  mermaid += `  T606 ==> COMPLETE\n`;
+
+  return mermaid;
+}
+
 // Initialize MCP Server
 const server = new Server(
   {
@@ -849,7 +1237,27 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           },
           stage: {
             type: 'string',
-            description: 'Stage to generate workflow for: Dispensing stages: "Pre-Dispensing", "Material Allocation", "Weighing & Dispensing", "Labeling & Documentation", "Post-Dispensing"; Granulation stages: "Pre-Granulation", "Material Transfer & Verification", "Binder Preparation", "Granulation", "Post-Granulation", "Closeout"; or "All" for complete workflow across both Dispensing and Granulation',
+            description: `Stage to generate workflow for:
+            
+    **Complete Workflows:**
+    - "All" - Both Dispensing + Granulation combined (full end-to-end)
+    - "Complete-Dispensing" - All 5 Dispensing stages only
+    - "Complete-Granulation" - All 6 Granulation stages only
+
+    **Individual Dispensing Stages:**
+    - "Pre-Dispensing"
+    - "Material Allocation"
+    - "Weighing & Dispensing"
+    - "Labeling & Documentation"
+    - "Post-Dispensing"
+
+    **Individual Granulation Stages:**
+    - "Pre-Granulation"
+    - "Material Transfer & Verification"
+    - "Binder Preparation"
+    - "Granulation"
+    - "Post-Granulation"
+    - "Closeout"`,
           },
         },
         required: ['client_name', 'stage'],
@@ -1238,6 +1646,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      // Replace the existing 'generate_workflow' case in the CallToolRequestSchema handler
+
       case 'generate_workflow': {
         const { client_name, stage } = args as { client_name: string; stage: string };
 
@@ -1258,16 +1668,131 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         const allTasks = await loadTasks();
 
-        // Filter tasks based on stage and client decisions
-        let filteredTasks = allTasks.filter((task) => {
-          if (stage !== 'All' && task.stage !== stage) {
-            return false;
-          }
-          return shouldIncludeTask(task, decisions);
-        });
+        // Define stage groups
+        const granulationStages = [
+          'Pre-Granulation',
+          'Material Transfer & Verification',
+          'Binder Preparation',
+          'Granulation',
+          'Post-Granulation',
+          'Closeout'
+        ];
+        
+        const dispensingStages = [
+          'Pre-Dispensing',
+          'Material Allocation',
+          'Weighing & Dispensing',
+          'Labeling & Documentation',
+          'Post-Dispensing'
+        ];
 
-        // Generate beautiful Mermaid diagram with enhanced UI
-        const mermaid = generateBeautifulMermaidDiagram(filteredTasks, allTasks, decisions, client_name);
+        let mermaid: string;
+        let workflowType: string;
+        let filteredTasks: Task[];
+
+        // Determine workflow type based on stage parameter
+        if (stage === 'All') {
+          // Generate BOTH Dispensing AND Granulation workflows combined
+          workflowType = 'Complete (Dispensing + Granulation)';
+          
+          filteredTasks = allTasks.filter((task) => {
+            return shouldIncludeTask(task, decisions);
+          });
+          
+          // Generate Dispensing part
+          const dispensingTasks = filteredTasks.filter(t => dispensingStages.includes(t.stage));
+          const dispensingMermaid = generateBeautifulMermaidDiagram(dispensingTasks, allTasks, decisions, client_name);
+          
+          // Generate Granulation part
+          const granulationTasks = filteredTasks.filter(t => granulationStages.includes(t.stage));
+          const granulationMermaid = generateGranulationWorkflow(granulationTasks, allTasks, decisions, client_name);
+          
+          // Combine them (remove duplicate headers from second diagram)
+          const granulationBody = granulationMermaid.split('\n').slice(9).join('\n'); // Skip header and class definitions
+          mermaid = dispensingMermaid.replace(/COMPLETE\([🎉 DISPENSING COMPLETE]\)[\s\S]*$/, '') + 
+                    '\n\n' +
+                    '  DISP_COMPLETE([🎉 DISPENSING COMPLETE])\n' +
+                    '  style DISP_COMPLETE fill:#4caf50,stroke:#2e7d32,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px\n' +
+                    '  T055 ==> DISP_COMPLETE\n\n' +
+                    '  DISP_COMPLETE ==> START_GRAN\n' +
+                    '  START_GRAN([🔗 BEGIN GRANULATION])\n' +
+                    '  style START_GRAN fill:#ff9800,stroke:#e65100,stroke-width:4px,color:#ffffff,font-weight:bold,font-size:18px\n\n' +
+                    granulationBody;
+                    
+        } else if (stage === 'Complete-Dispensing') {
+          // Generate ONLY complete Dispensing workflow (all dispensing stages)
+          workflowType = 'Complete Dispensing Workflow';
+          
+          filteredTasks = allTasks.filter((task) => {
+            if (!dispensingStages.includes(task.stage)) {
+              return false;
+            }
+            return shouldIncludeTask(task, decisions);
+          });
+          
+          mermaid = generateBeautifulMermaidDiagram(filteredTasks, allTasks, decisions, client_name);
+          
+        } else if (stage === 'Complete-Granulation') {
+          // Generate ONLY complete Granulation workflow (all granulation stages)
+          workflowType = 'Complete Granulation Workflow';
+          
+          filteredTasks = allTasks.filter((task) => {
+            if (!granulationStages.includes(task.stage)) {
+              return false;
+            }
+            return shouldIncludeTask(task, decisions);
+          });
+          
+          mermaid = generateGranulationWorkflow(filteredTasks, allTasks, decisions, client_name);
+          
+        } else if (granulationStages.includes(stage)) {
+          // Generate specific Granulation stage
+          workflowType = `Granulation - ${stage}`;
+          
+          filteredTasks = allTasks.filter((task) => {
+            if (task.stage !== stage) {
+              return false;
+            }
+            return shouldIncludeTask(task, decisions);
+          });
+          
+          mermaid = generateGranulationWorkflow(filteredTasks, allTasks, decisions, client_name);
+          
+        } else if (dispensingStages.includes(stage)) {
+          // Generate specific Dispensing stage
+          workflowType = `Dispensing - ${stage}`;
+          
+          filteredTasks = allTasks.filter((task) => {
+            if (task.stage !== stage) {
+              return false;
+            }
+            return shouldIncludeTask(task, decisions);
+          });
+          
+          mermaid = generateBeautifulMermaidDiagram(filteredTasks, allTasks, decisions, client_name);
+          
+        } else {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Error: Unknown stage "${stage}". Valid options are:
+
+      **Complete Workflows:**
+      - "All" - Both Dispensing + Granulation combined
+      - "Complete-Dispensing" - All Dispensing stages only
+      - "Complete-Granulation" - All Granulation stages only
+
+      **Individual Dispensing Stages:**
+      ${dispensingStages.map(s => `- "${s}"`).join('\n')}
+
+      **Individual Granulation Stages:**
+      ${granulationStages.map(s => `- "${s}"`).join('\n')}`,
+              },
+            ],
+            isError: true,
+          };
+        }
 
         // Calculate metadata
         const metadata: WorkflowMetadata = {
@@ -1283,7 +1808,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         clientWorkflows[client_name] = {
           last_generated: new Date().toISOString(),
-          stage: stage,
+          stage: workflowType,
           version: existingVersion + 1,
           mermaid_code: mermaid,
           metadata: metadata,
@@ -1292,43 +1817,43 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         await saveClientWorkflows(clientWorkflows);
 
         // Create summary
-        const summary = `## Workflow Generated for ${client_name} - ${stage}
+        const summary = `## Workflow Generated for ${client_name} - ${workflowType}
 
-**✅ Auto-saved to client_workflows.json (Version ${clientWorkflows[client_name].version})**
+      **✅ Auto-saved to client_workflows.json (Version ${clientWorkflows[client_name].version})**
 
-**Configuration Summary:**
-- Total tasks in library: ${allTasks.length}
-- Tasks included in workflow: ${metadata.task_count}
-  - Macro stages: ${metadata.macro_count}
-  - Micro tasks: ${metadata.task_count - metadata.macro_count - metadata.loop_count}
-  - Loop constructs: ${metadata.loop_count}
+      **Configuration Summary:**
+      - Total tasks in library: ${allTasks.length}
+      - Tasks included in workflow: ${metadata.task_count}
+        - Macro stages: ${metadata.macro_count}
+        - Micro tasks: ${metadata.task_count - metadata.macro_count - metadata.loop_count}
+        - Loop constructs: ${metadata.loop_count}
 
-**Applied Decisions (${metadata.decision_count}):**
-${Object.entries(decisions)
-  .slice(0, 10)
-  .map(([id, data]) => `- ${id} = "${data.selected_outcome}"`)
-  .join('\n')}${Object.keys(decisions).length > 10 ? `\n... and ${Object.keys(decisions).length - 10} more` : ''}
+      **Applied Decisions (${metadata.decision_count}):**
+      ${Object.entries(decisions)
+        .slice(0, 10)
+        .map(([id, data]) => `- ${id} = "${data.selected_outcome}"`)
+        .join('\n')}${Object.keys(decisions).length > 10 ? `\n... and ${Object.keys(decisions).length - 10} more` : ''}
 
-**Features in v3.0:**
-✅ Support for Dispensing and Granulation stages (11 total stages)
-✅ Beautiful enhanced UI with emojis and professional colors
-✅ Clear START 🏁 and COMPLETE 🎉 nodes
-✅ Visual hierarchy with blue macros and purple loops
-✅ Exception paths highlighted in red dashed boxes
-✅ Decision diamonds in orange for runtime conditions
+      **Features in v3.0:**
+      ✅ Support for Dispensing and Granulation stages (11 total stages)
+      ✅ Beautiful enhanced UI with emojis and professional colors
+      ✅ Clear START 🏁 and COMPLETE 🎉 nodes
+      ✅ Visual hierarchy with blue macros and purple loops
+      ✅ Exception paths highlighted in red dashed boxes
+      ✅ Decision diamonds in orange for runtime conditions
 
-**Workflow Diagram:**
+      **Workflow Diagram:**
 
-\`\`\`mermaid
-${mermaid}
-\`\`\`
+      \`\`\`mermaid
+      ${mermaid}
+      \`\`\`
 
-**Next Steps:**
-- Review the workflow above
-- Make any necessary decision changes and regenerate
-- When finalized, use \`export_workflow\` to create a PNG deliverable
+      **Next Steps:**
+      - Review the workflow above
+      - Make any necessary decision changes and regenerate
+      - When finalized, use \`export_workflow\` to create a PNG deliverable
 
-**Note:** This workflow has been automatically saved. You can retrieve it anytime using \`get_saved_workflow\`.`;
+      **Note:** This workflow has been automatically saved. You can retrieve it anytime using \`get_saved_workflow\`.`;
 
         return {
           content: [

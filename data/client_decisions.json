@@ -139,6 +139,126 @@
       "selected_outcome": "Partial between batches",
       "rationale": "Partial cleaning between batches; Full cleaning at campaign end (policy-timed)",
       "timestamp": "2025-01-14T10:27:00Z"
+    },
+    "GRAN-D-METHOD-001": {
+      "selected_outcome": "Wet",
+      "rationale": "Typical tableting flow; demonstrates binder path",
+      "timestamp": "2025-10-28T08:29:09.513Z"
+    },
+    "GRAN-D-CLN-001": {
+      "selected_outcome": "Visual + swab",
+      "rationale": "Standard cleaning verification with swab testing",
+      "timestamp": "2025-10-28T08:29:14.762Z"
+    },
+    "GRAN-D-CAL-001": {
+      "selected_outcome": "Before each batch",
+      "rationale": "Calibration verified before each batch starts",
+      "timestamp": "2025-10-28T08:29:19.633Z"
+    },
+    "GRAN-D-ENV-001": {
+      "selected_outcome": "Automated (HVAC historian)",
+      "rationale": "Automated environmental monitoring via HVAC system",
+      "timestamp": "2025-10-28T08:29:26.279Z"
+    },
+    "GRAN-D-MAT-001": {
+      "selected_outcome": "Barcode scan mandatory",
+      "rationale": "Barcode scanning ensures material traceability",
+      "timestamp": "2025-10-28T08:29:30.387Z"
+    },
+    "GRAN-D-CONT-001": {
+      "selected_outcome": "Yes (visual + seal)",
+      "rationale": "Full container integrity verification required",
+      "timestamp": "2025-10-28T08:29:37.436Z"
+    },
+    "GRAN-D-BINDER-001": {
+      "selected_outcome": "Pre-made batch in separate vessel",
+      "rationale": "Pre-made binder batch for wet granulation",
+      "timestamp": "2025-10-28T08:33:44.647Z"
+    },
+    "GRAN-D-BINDER-QC-001": {
+      "selected_outcome": "Concentration + pH",
+      "rationale": "Full QC testing of binder solution before use",
+      "timestamp": "2025-10-28T08:33:53.088Z"
+    },
+    "GRAN-D-RECIPE-001": {
+      "selected_outcome": "MES master recipe",
+      "rationale": "Use approved MES master recipe with locked parameters",
+      "timestamp": "2025-10-28T08:34:20.712Z"
+    },
+    "GRAN-D-SCADA-001": {
+      "selected_outcome": "Yes (automated setpoints)",
+      "rationale": "Full SCADA integration with automated setpoints",
+      "timestamp": "2025-10-28T08:34:34.924Z"
+    },
+    "GRAN-D-WET-PARAM-001": {
+      "selected_outcome": "Continuous spray",
+      "rationale": "Automated binder addition with flow control",
+      "timestamp": "2025-10-28T08:35:11.697Z"
+    },
+    "GRAN-D-CAPTURE-001": {
+      "selected_outcome": "Automated (SCADA historian)",
+      "rationale": "OPC UA/SCADA integration for automated data capture",
+      "timestamp": "2025-10-28T08:36:05.532Z"
+    },
+    "GRAN-D-IPC-001": {
+      "selected_outcome": "All batches",
+      "rationale": "Test all batches for quality consistency",
+      "timestamp": "2025-10-28T08:36:31.443Z"
+    },
+    "GRAN-D-LIMS-001": {
+      "selected_outcome": "Full integration (auto-import)",
+      "rationale": "Bi-directional LIMS integration with auto-import results",
+      "timestamp": "2025-10-28T08:37:05.542Z"
+    },
+    "GRAN-D-CALC-001": {
+      "selected_outcome": "Enabled (binder %, yield)",
+      "rationale": "Automated calculations for yield and material reconciliation",
+      "timestamp": "2025-10-28T08:37:25.801Z"
+    },
+    "GRAN-D-DEVIATION-001": {
+      "selected_outcome": "MES-integrated deviation module",
+      "rationale": "Integrated deviation management within MES",
+      "timestamp": "2025-10-28T08:38:12.715Z"
+    },
+    "GRAN-D-LABEL-001": {
+      "selected_outcome": "GS1-128 barcode + manual fields",
+      "rationale": "GS1-128 barcode labels with additional manual fields",
+      "timestamp": "2025-10-28T08:38:26.494Z"
+    },
+    "GRAN-D-RETAIN-001": {
+      "selected_outcome": "Mandatory with chain-of-custody",
+      "rationale": "Mandatory retain samples with full chain-of-custody tracking",
+      "timestamp": "2025-10-28T08:38:33.927Z"
+    },
+    "GRAN-D-TRANSFER-001": {
+      "selected_outcome": "Intermediate hold area",
+      "rationale": "Best practice: Granules should be transferred to intermediate hold area for QA sampling, retain collection, and release decision before proceeding to next stage. This ensures proper quality control gates and prevents downstream processing of potentially non-conforming material.",
+      "timestamp": "2025-10-28T08:45:19.420Z"
+    },
+    "GRAN-D-YIELD-001": {
+      "selected_outcome": "±5%",
+      "rationale": "Best practice: ±5% is the industry standard threshold that balances process control with practical variability. Tighter control ensures material accountability and triggers investigation for significant deviations that could indicate process issues or material loss.",
+      "timestamp": "2025-10-28T08:45:24.151Z"
+    },
+    "GRAN-D-CLEAN-POLICY-001": {
+      "selected_outcome": "After each batch",
+      "rationale": "Best practice: Cleaning after each batch minimizes cross-contamination risk, ensures product quality, and aligns with cGMP requirements. This is especially critical in multi-product facilities to prevent cross-contamination and maintain validated cleaning procedures.",
+      "timestamp": "2025-10-28T08:45:29.687Z"
+    },
+    "GRAN-D-ERP-POST-001": {
+      "selected_outcome": "On QA approval",
+      "rationale": "Best practice: On QA approval ensures inventory accuracy and prevents premature posting of non-conforming batches. This aligns with quality-driven operations where only approved material should be reflected in inventory systems, maintaining data integrity and regulatory compliance.",
+      "timestamp": "2025-10-28T08:45:35.962Z"
+    },
+    "GRAN-D-EBMR-001": {
+      "selected_outcome": "Full electronic (21 CFR Part 11)",
+      "rationale": "Best practice: Full electronic batch records with 21 CFR Part 11 compliance represent the modern pharma standard. This ensures data integrity, eliminates transcription errors, enables real-time review, provides complete audit trails, and supports regulatory expectations for paperless manufacturing.",
+      "timestamp": "2025-10-28T08:45:40.929Z"
+    },
+    "GRAN-D-ARCHIVE-001": {
+      "selected_outcome": "Electronic archive (validated system)",
+      "rationale": "Best practice: Electronic archive in a validated system is the regulatory expectation for modern pharmaceutical operations. This ensures long-term data integrity, enables efficient retrieval for audits/inspections, supports data migration, and aligns with FDA/EMA guidance on electronic records management.",
+      "timestamp": "2025-10-28T08:45:46.139Z"
     }
   },
   "TechPharma": {
