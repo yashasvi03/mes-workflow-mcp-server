@@ -207,6 +207,7 @@ function findClosestIncludedAncestor(
 function findLoopStart(loopEndId: string): string {
   if (loopEndId === 'DISP-L-002') return 'DISP-L-001';
   if (loopEndId === 'DISP-SL-006') return 'DISP-SL-001';
+  if (loopEndId === 'GRAN-L-002') return 'GRAN-L-001';
   return loopEndId;
 }
 
@@ -252,6 +253,12 @@ function generateMermaidDiagram(
     'Weighing & Dispensing',
     'Labeling & Documentation',
     'Post-Dispensing',
+    'Pre-Granulation',
+    'Material Transfer & Verification',
+    'Binder Preparation',
+    'Granulation',
+    'Post-Granulation',
+    'Closeout',
   ];
 
   for (const stage of stageOrder) {
@@ -739,7 +746,7 @@ function generateBeautifulMermaidDiagram(
 const server = new Server(
   {
     name: 'mes-workflow-server',
-    version: '2.3.0',
+    version: '3.0.0',
   },
   {
     capabilities: {
@@ -753,13 +760,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
       name: 'get_decisions',
-      description: 'Get all decision questions for a manufacturing stage. Use this to understand what questions need to be answered for workflow configuration.',
+      description: 'Get all decision questions for a manufacturing stage. Use this to understand what questions need to be answered for workflow configuration. Supports Dispensing and Granulation stages.',
       inputSchema: {
         type: 'object',
         properties: {
           stage: {
             type: 'string',
-            description: 'Stage name: "Pre-Dispensing", "Material Allocation", "Weighing & Dispensing", "Labeling & Documentation", "Post-Dispensing", or "All" for all stages',
+            description: 'Stage name: Dispensing stages: "Pre-Dispensing", "Material Allocation", "Weighing & Dispensing", "Labeling & Documentation", "Post-Dispensing"; Granulation stages: "Pre-Granulation", "Material Transfer & Verification", "Binder Preparation", "Granulation", "Post-Granulation", "Closeout"; or "All" for all stages',
           },
           category: {
             type: 'string',
@@ -832,7 +839,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'generate_workflow',
-      description: 'Generate a Mermaid workflow diagram based on client decisions and automatically save it to client_workflows.json. This filters tasks based on Practice decisions and shows all Runtime exception paths. Version 2.2 includes beautiful enhanced UI with emojis and professional styling.',
+      description: 'Generate a Mermaid workflow diagram based on client decisions and automatically save it to client_workflows.json. This filters tasks based on Practice decisions and shows all Runtime exception paths. Version 3.0 includes Dispensing and Granulation stages with beautiful enhanced UI, emojis, and professional styling.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -842,7 +849,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           },
           stage: {
             type: 'string',
-            description: 'Stage to generate workflow for: "Pre-Dispensing", "Material Allocation", "Weighing & Dispensing", "Labeling & Documentation", "Post-Dispensing", or "All" for complete workflow',
+            description: 'Stage to generate workflow for: Dispensing stages: "Pre-Dispensing", "Material Allocation", "Weighing & Dispensing", "Labeling & Documentation", "Post-Dispensing"; Granulation stages: "Pre-Granulation", "Material Transfer & Verification", "Binder Preparation", "Granulation", "Post-Granulation", "Closeout"; or "All" for complete workflow across both Dispensing and Granulation',
           },
         },
         required: ['client_name', 'stage'],
@@ -1569,7 +1576,7 @@ ${formatted}`,
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('MES Workflow MCP server v2.3.0 running on stdio');
+  console.error('MES Workflow MCP server v3.0.0 running on stdio');
 }
 
 main().catch((error) => {
